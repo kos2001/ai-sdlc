@@ -35,6 +35,7 @@
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.7);
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--ground);color:var(--ink);font:400 15px/1.65 var(--body);-webkit-font-smoothing:antialiased;padding-inline:clamp(16px,4vw,40px)}
 .wrap{max-width:var(--wrap);margin-inline:auto}
@@ -230,6 +231,65 @@ td.o{color:var(--legacy)}
 .steps b{display:block;font-size:14.5px}
 .steps span{font-size:13.5px;color:var(--muted)}
 footer{border-top:1px solid var(--line);padding-block:32px 48px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+/* shell + sidebar */
+.shell{display:grid;grid-template-columns:236px minmax(0,1fr);gap:clamp(28px,3.4vw,56px);max-width:1440px;margin-inline:auto}
+.shell > main{min-width:0;max-width:1120px}
+.side{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;max-height:100vh;overflow-y:auto;padding-block:28px 24px;display:flex;flex-direction:column;gap:26px;scrollbar-width:thin}
+.side .brand{font-size:19px}
+.side-group{display:grid;gap:2px}
+.side-group > span{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);padding:0 10px 8px}
+.side-group a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;text-decoration:none;color:var(--muted);font-size:14px;border-left:2px solid transparent}
+.side-group a:hover{background:var(--sunk);color:var(--ink)}
+.side-group a.active{color:var(--ink);background:var(--surface);border-left-color:var(--accent);box-shadow:var(--shadow);font-weight:600}
+.side-group a .mono{margin-left:auto;font-size:11px;color:var(--faint)}
+.side-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px;display:grid;gap:8px;font-size:12.5px;color:var(--muted)}
+.side-card b{font:700 22px/1 var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.side-card a{color:var(--accent);font-weight:600;text-decoration:none}
+@media (min-width:1024px){.nav{display:none}}
+@media (max-width:1023px){.shell{grid-template-columns:minmax(0,1fr)}.side{display:none}}
+
+/* evidence */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;display:grid;gap:6px;align-content:start}
+.stat .lab{font-size:12.5px;color:var(--muted)}
+.stat .num{font:800 clamp(28px,3.4vw,40px)/1 var(--display);letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.stat .num small{font:600 15px/1 var(--body);color:var(--muted);margin-left:4px;letter-spacing:0}
+.stat .sub{font-size:12.5px;color:var(--faint)}
+.stat.alert .num{color:var(--gate)}
+.ev-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:16px}
+@media (max-width:900px){.ev-grid{grid-template-columns:1fr}}
+.chart-card{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:20px;display:grid;gap:12px;align-content:start;min-width:0}
+.chart-card.wide{margin-top:16px}
+.chart-card h3{font-size:16px}
+.chart-card .cap{font-size:13px;color:var(--muted);max-width:70ch}
+.chart-scroll{overflow-x:auto}
+.chart-scroll svg{display:block;min-width:620px;width:100%;height:auto}
+.chart-scroll text{fill:var(--muted);font:500 11px var(--mono)}
+.chart-scroll .lane-lab{fill:var(--ink);font:600 12px var(--mono)}
+.chart-scroll .grid{stroke:var(--line);stroke-width:1}
+.chart-scroll .pr{cursor:pointer;stroke:var(--surface);stroke-width:2}
+.chart-scroll .pr.need{fill:var(--gate)}
+.chart-scroll .pr.auto{fill:var(--faint)}
+.chart-scroll .pr:hover,.chart-scroll .pr:focus{stroke:var(--ink)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.hbars{display:grid;gap:12px}
+.hbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+.hbar .l{font-size:13.5px;color:var(--ink-2)}
+.hbar .v{font:600 13px/1 var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+.hbar .track{grid-column:1 / -1;height:10px;border-radius:5px;background:var(--sunk);overflow:hidden;display:flex;gap:2px}
+.hbar .fill{height:100%;border-radius:4px;background:var(--gate)}
+.hbar .fill.accent{background:var(--accent)}
+.hbar .fill.ghost{background:var(--line-strong)}
+.tip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--ground);border-radius:8px;padding:8px 10px;font:500 12px/1.5 var(--body);max-width:280px;box-shadow:var(--shadow)}
+.tip b{font-weight:600}
+.limits{margin:16px 0 0;padding:16px 20px 16px 36px;border:1px dashed var(--line-strong);border-radius:12px;display:grid;gap:6px;font-size:13.5px;color:var(--ink-2)}
+.hook-table td,.hook-table th{padding:10px 14px}
+.hook-table{min-width:520px}
+.ok{color:var(--accent);font-weight:600}.no{color:var(--bad);font-weight:600}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -243,6 +303,7 @@ footer{border-top:1px solid var(--line);padding-block:32px 48px;display:flex;jus
       <li><a href="#shape">루프</a></li>
       <li><a href="#stages">단계 비교</a></li>
       <li><a href="#journey">작업의 여정</a></li>
+      <li><a href="#evidence">실측</a></li>
       <li><a href="#plays">12개 플레이</a></li>
       <li><a href="#governance">거버넌스</a></li>
       <li><a href="#start">시작하기</a></li>
@@ -250,7 +311,37 @@ footer{border-top:1px solid var(--line);padding-block:32px 48px;display:flex;jus
   </div>
 </nav>
 
-<main class="wrap" id="top">
+<div class="shell">
+<aside class="side" aria-label="섹션 탐색">
+  <a class="brand" href="#top" aria-label="ai-sdlc 처음으로">
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="10" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-dasharray="46 17" transform="rotate(-60 13 13)"/><circle cx="13" cy="13" r="3.2" fill="var(--gate)"/></svg>
+    ai-sdlc
+  </a>
+  <nav class="side-group" aria-label="개념">
+    <span>개념</span>
+    <a href="#top">병목의 이동</a>
+    <a href="#shape">직선에서 루프로</a>
+    <a href="#stages">단계별 비교</a>
+    <a href="#journey">한 작업의 여정 <span class="mono">예시</span></a>
+  </nav>
+  <nav class="side-group" aria-label="실측">
+    <span>실측</span>
+    <a href="#evidence">lls-kit 30시간 <span class="mono">실데이터</span></a>
+  </nav>
+  <nav class="side-group" aria-label="적용">
+    <span>적용</span>
+    <a href="#plays">12개 플레이</a>
+    <a href="#governance">거버넌스</a>
+    <a href="#start">시작하기</a>
+  </nav>
+  <div class="side-card">
+    <span>lls-kit에서 잰 값</span>
+    <div><b id="side-reviews">0</b> 건의 리뷰</div>
+    <div id="side-caption">병합된 PR 25건 중 리뷰를 받은 PR</div>
+    <a href="#evidence">측정 보기 →</a>
+  </div>
+</aside>
+<main id="top">
   <header class="hero">
     <div style="display:grid;gap:22px">
       <span class="eyebrow">AI-native software lifecycle</span>
@@ -346,6 +437,55 @@ footer{border-top:1px solid var(--line);padding-block:32px 48px;display:flex;jus
     <div class="tally" id="tally"></div>
   </section>
 
+  <section id="evidence" aria-labelledby="ev-h">
+    <div class="sec-head">
+      <span class="eyebrow">Evidence · lls-kit</span>
+      <h2 id="ev-h">예시가 아니라, 실제 저장소 30시간의 기록</h2>
+      <p class="lede"><code>lls-kit</code>은 Claude와 함께 이틀 만에 만든 3GPP 링크레벨 시뮬레이터입니다. 아래 숫자는 GitHub PR 기록, git 로그, 이 저장소의 결함 대장에서 직접 잰 값이고, 등급은 ai-sdlc를 그 이력에 재생해 계산했습니다. 빌드는 정말로 빨라졌습니다. 문제는 그 옆에서 일어난 일입니다.</p>
+    </div>
+    <div class="stats" id="ev-stats"></div>
+
+    <div class="chart-card wide">
+      <h3>병합된 PR 25건 — 언제, 어떤 위험 등급이었나</h3>
+      <p class="cap" id="ev-timeline-cap"></p>
+      <div class="legend"><span><i style="background:var(--gate)"></i>ai-sdlc라면 사람 승인이 필요 (T2·T3)</span><span><i style="background:var(--faint)"></i>자동 게이트로 충분 (T0·T1)</span></div>
+      <div class="chart-scroll"><svg id="ev-timeline" viewBox="0 0 900 250" role="img" aria-labelledby="ev-tl-desc"><desc id="ev-tl-desc">병합된 PR 25건을 생성 시각과 위험 등급으로 배치한 점 도표</desc></svg></div>
+    </div>
+
+    <div class="ev-grid">
+      <div class="chart-card">
+        <h3>같은 25건에 ai-sdlc 게이트를 재생하면</h3>
+        <p class="cap">실제로 일어난 일과, 같은 변경이 ai-sdlc의 게이트를 지났다면 요구됐을 것.</p>
+        <div class="hbars" id="ev-gates"></div>
+      </div>
+      <div class="chart-card">
+        <h3>결함 15건은 무엇이 잡았나</h3>
+        <p class="cap">lls-kit의 결함 대장(<code>defects.json</code>). 이 저장소가 먼저 배운 것 — "게이트가 결함보다 늦게 생긴다" — 이 ai-sdlc가 정책을 행동 시점에 두는 이유입니다.</p>
+        <div class="hbars" id="ev-defects"></div>
+      </div>
+    </div>
+
+    <div class="chart-card wide">
+      <h3>ai-sdlc 자신의 측정 — Hook은 얼마나 정확했나</h3>
+      <p class="cap">통제도 측정 대상입니다. 이 저장소를 만드는 세션에서 처음 배포한 Hook은 무해한 명령까지 막았습니다. 그 기록이 수정의 근거가 됐습니다.</p>
+      <div class="table-wrap" style="margin-top:0">
+        <table class="hook-table">
+          <thead><tr><th>버전</th><th>표본</th><th>막아야 할 것을 막음</th><th>허용해야 할 것을 막음</th></tr></thead>
+          <tbody>
+            <tr><td>처음 배포한 셸 쓰기 탐지</td><td>이 세션에서 실제로 막힌 명령 7건</td><td>0건 (실제 위반 없음)</td><td class="no">7건 · 전부 오탐</td></tr>
+            <tr><td>쓰기 대상만 판정하는 수정본</td><td>lls-kit 실제 Hook 명령 9개 사례</td><td class="ok">5 / 5</td><td class="ok">0 / 4</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <ol class="limits" aria-label="측정의 한계">
+      <li>회고 측정입니다. ai-sdlc 도입 PR(#27)은 아직 병합 전이라 "도입 후 개선"이 아니라 "기존 방식이 통과시킨 것"과 "ai-sdlc라면 요구했을 것"을 비교합니다.</li>
+      <li>소유자가 한 명입니다. 스스로 병합한 것은 규칙 위반이 아니라 1인 저장소의 구조이고, 병합이 빠른 것 자체가 결함은 아닙니다.</li>
+      <li>등급은 <code>policy/risk-tiers.json</code>의 규칙에 달려 있습니다. 규칙이 바뀌면 T3 비율도 바뀝니다.</li>
+    </ol>
+  </section>
+
   <section id="plays" aria-labelledby="plays-h">
     <div class="sec-head">
       <span class="eyebrow">Adoption graph</span>
@@ -414,12 +554,12 @@ work/2026/W-0142-checkout-latency-for-eu-users/intent.md
       </div>
     </div>
   </section>
-</main>
-
-<footer class="wrap">
+<footer>
   <span>ai-sdlc · Anthropic Applied AI의 AI-native SDLC 플레이북을 구현한 참조 저장소</span>
   <span class="mono">python3 -m sdlc --help</span>
 </footer>
+</main>
+</div>
 
 <script>
 const STAGES = [
@@ -515,6 +655,12 @@ const CONTROLS = [
   ["변경 관리", "주간 CAB", "정책 게이트 + T3 production 승인", "release record"],
   ["운영 감시", "사람이 대시보드 관찰", "control band + 에이전트 진단", "incident record"],
 ];
+</script>
+<script>
+/* Measured, not illustrative: lls-kit GitHub PRs (gh pr list), git log, defects.json, and ai-sdlc's
+   risk tiers replayed on each merged PR with lls-kit's policy. Collected 2026-09-18. */
+const EVIDENCE = {"summary": {"prs": 25, "spanHours": 29.8, "medianLeadSec": 10.0, "maxLeadSec": 1913.0, "added": 15188, "reviews": 0, "commits": 77, "claudeCommits": 50, "nonT0": 22, "needReview": 20, "t3": 18, "t3After": 17}, "prs": [{"n": 1, "t": "2026-09-12T06:36:50Z", "lead": 10.0, "add": 66, "del": 18, "files": 2, "tier": "T0", "tierAfter": "T0", "title": "README: 블록 지도와 React Flow 그래프 뷰 문서화"}, {"n": 2, "t": "2026-09-12T06:46:33Z", "lead": 9.0, "add": 140, "del": 9, "files": 6, "tier": "T1", "tierAfter": "T1", "title": "다크 모드 토글 (시스템 / 라이트 / 다크)"}, {"n": 3, "t": "2026-09-12T07:07:39Z", "lead": 17.0, "add": 170, "del": 1, "files": 9, "tier": "T1", "tierAfter": "T1", "title": "파비콘 추가 (BLER 워터폴 모티브)"}, {"n": 4, "t": "2026-09-12T11:47:50Z", "lead": 18.0, "add": 3411, "del": 209, "files": 45, "tier": "T3", "tierAfter": "T3", "title": "HW/SW codesign 축 · 자기개선 루프 · 미구현 블록 구현"}, {"n": 5, "t": "2026-09-12T12:03:54Z", "lead": 9.0, "add": 416, "del": 71, "files": 12, "tier": "T3", "tierAfter": "T3", "title": "DM-RS type 2 (6 레이어) · 시간영역 다중 레이어 · 검출기 추정오차 반영"}, {"n": 6, "t": "2026-09-12T12:19:35Z", "lead": 11.0, "add": 335, "del": 118, "files": 11, "tier": "T3", "tierAfter": "T3", "title": "DM-RS double-symbol 로 최대 12 레이어"}, {"n": 7, "t": "2026-09-12T15:19:39Z", "lead": 10.0, "add": 429, "del": 53, "files": 15, "tier": "T3", "tierAfter": "T3", "title": "실제 38.212 LDPC — base graph 표를 3GPP 원문에서 직접 추출"}, {"n": 8, "t": "2026-09-13T00:03:06Z", "lead": 10.0, "add": 189, "del": 12, "files": 12, "tier": "T3", "tierAfter": "T3", "title": "규격 표를 저장소에 포함 · 리프팅 크기 표 원문 대조 완료"}, {"n": 9, "t": "2026-09-13T00:34:13Z", "lead": 10.0, "add": 92, "del": 19, "files": 7, "tier": "T3", "tierAfter": "T3", "title": "대시보드의 거짓 '미구현' 표시 수정 (D10)"}, {"n": 10, "t": "2026-09-13T01:13:49Z", "lead": 9.0, "add": 1169, "del": 3, "files": 14, "tier": "T3", "tierAfter": "T3", "title": "PHY 확장 1: 동기신호 · Polar 부호 · PBCH (SSB 완성)"}, {"n": 11, "t": "2026-09-13T01:26:58Z", "lead": 11.0, "add": 612, "del": 2, "files": 8, "tier": "T3", "tierAfter": "T3", "title": "PHY 확장 2: PDCCH · PRACH (초기접속 경로 완성)"}, {"n": 12, "t": "2026-09-13T01:43:10Z", "lead": 12.0, "add": 1064, "del": 77, "files": 14, "tier": "T3", "tierAfter": "T3", "title": "PHY 확장 3: PUSCH · PUCCH · CSI-RS · SRS · PT-RS"}, {"n": 13, "t": "2026-09-13T01:48:18Z", "lead": 10.0, "add": 104, "del": 83, "files": 3, "tier": "T0", "tierAfter": "T0", "title": "PHY 채널 메모 분리 (입력 크기 게이트 복구)"}, {"n": 14, "t": "2026-09-13T02:09:30Z", "lead": 9.0, "add": 511, "del": 27, "files": 17, "tier": "T3", "tierAfter": "T3", "title": "남은 partial 블록 6개 완성 (셀 탐색 · PRACH 파형 · PUCCH 포맷 · CSI-RS 표 · SRS 호핑 · 탐색공간)"}, {"n": 15, "t": "2026-09-13T02:28:02Z", "lead": 10.0, "add": 543, "del": 13, "files": 14, "tier": "T3", "tierAfter": "T3", "title": "남은 구현 완료: CORESET 매핑 · 위상잡음 모델 · SSB 버스트 · UCI 다중화 · SRS 스위칭"}, {"n": 16, "t": "2026-09-13T06:58:01Z", "lead": 9.0, "add": 273, "del": 17, "files": 13, "tier": "T3", "tierAfter": "T3", "title": "규격 표 11종 원문 대조 — 세 곳이 틀려 있었다 (D11)"}, {"n": 17, "t": "2026-09-13T07:05:43Z", "lead": 2.0, "add": 357, "del": 148, "files": 10, "tier": "T3", "tierAfter": "T3", "title": "결과 재생성 · DM-RS 기반 PBCH 수신 · PRACH 자원 매핑"}, {"n": 18, "t": "2026-09-13T07:31:40Z", "lead": 2.0, "add": 71, "del": 12, "files": 10, "tier": "T3", "tierAfter": "T3", "title": "남은 '검증 필요' 전수 감사 — 다섯은 해제, 하나는 결함 (D12)"}, {"n": 19, "t": "2026-09-13T07:43:14Z", "lead": 15.0, "add": 232, "del": 47, "files": 8, "tier": "T3", "tierAfter": "T3", "title": "블록 지도에 채널별 묶기 — PHY 구조를 그림으로"}, {"n": 20, "t": "2026-09-13T07:58:42Z", "lead": 6.0, "add": 529, "del": 2, "files": 7, "tier": "T3", "tierAfter": "T3", "title": "보고서 생성 - 곡선 옆에 '이 숫자의 조건'을 같이 싣는다"}, {"n": 21, "t": "2026-09-13T08:52:23Z", "lead": 1913.0, "add": 3792, "del": 32, "files": 35, "tier": "T3", "tierAfter": "T3", "title": "곡선에서 판정으로 — 물리채널 캠페인과 38.101-4 적합성 시험"}, {"n": 22, "t": "2026-09-13T09:24:41Z", "lead": 8.0, "add": 3, "del": 0, "files": 2, "tier": "T0", "tierAfter": "T0", "title": "대시보드 스크린샷 제거"}, {"n": 23, "t": "2026-09-13T12:08:08Z", "lead": 12.0, "add": 184, "del": 81, "files": 6, "tier": "T2", "tierAfter": "T2", "title": "대시보드가 물리채널 캠페인을 못 다뤘다"}, {"n": 24, "t": "2026-09-13T12:20:14Z", "lead": 12.0, "add": 226, "del": 19, "files": 6, "tier": "T3", "tierAfter": "T2", "title": "결과 조회·비교 API와 검증 게이트 추가"}, {"n": 25, "t": "2026-09-13T12:23:57Z", "lead": 13.0, "add": 270, "del": 10, "files": 11, "tier": "T2", "tierAfter": "T2", "title": "결과 관리 화면과 baseline 비교 워크플로 추가"}]};
+const DEFECTS = { total: 15, noGateYet: 13, blindToCurve: 12, byHuman: 10, byExistingGate: 2 };
 </script>
 <script>
 (() => {
@@ -667,6 +813,79 @@ const CONTROLS = [
     <div class="meter" aria-hidden="true">${[0, 1, 2, 3].map((k) => `<i class="${k <= i ? "on" : ""}"></i>`).join("")}</div>
     <p>${esc(t.title)}</p><div class="ex">${esc(t.ex)}</div><div class="fine">${esc(t.rel)}</div></div>`).join("");
   $("#control-rows").innerHTML = CONTROLS.map((r) => `<tr><td><b>${esc(r[0])}</b></td><td class="o">${esc(r[1])}</td><td>${esc(r[2])}</td><td class="mono">${esc(r[3])}</td></tr>`).join("");
+
+  /* evidence: measured lls-kit history */
+  const S = EVIDENCE.summary, P = EVIDENCE.prs;
+  const fast = P.filter((p) => p.lead <= 20).length;
+  $("#ev-stats").innerHTML = [
+    ["병합된 PR", S.prs, "건", `${S.spanHours}시간 동안 · ${S.added.toLocaleString("ko-KR")}줄 추가`, ""],
+    ["열림 → 병합 중앙값", S.medianLeadSec, "초", `${S.prs}건 중 ${fast}건이 20초 안에 · 최장 #21 ${Math.round(S.maxLeadSec / 60)}분`, ""],
+    ["리뷰를 받은 PR", S.reviews, "건", `${S.prs}건 모두 작성자가 직접 병합`, "alert"],
+    ["Claude 공동 작성 커밋", Math.round((S.claudeCommits / S.commits) * 100), "%", `커밋 ${S.commits}개 중 ${S.claudeCommits}개`, ""],
+  ].map(([l, n, u, s, c]) => `<div class="stat ${c}"><span class="lab">${l}</span><span class="num">${n}<small>${u}</small></span><span class="sub">${s}</span></div>`).join("");
+  $("#side-reviews").textContent = S.reviews;
+  $("#side-caption").textContent = `병합된 PR ${S.prs}건 중 리뷰를 받은 PR · ai-sdlc 기준 사람 승인 필요 ${S.needReview}건`;
+  $("#ev-timeline-cap").textContent = `T3 ${S.t3}건은 규격 표·realm·골든 벡터·게이트 자체를 건드린 변경입니다 — lls-kit의 AGENTS.md가 "에이전트에게 맡기면 안 되는 일"로 적은 바로 그 영역. 점 크기는 추가된 줄 수입니다.`;
+
+  (function timeline() {
+    const svgT = $("#ev-timeline"), W = 900, L = 56, Rr = 24, top = 30, laneH = 48;
+    const lanes = ["T3", "T2", "T1", "T0"];
+    const t0 = Date.parse("2026-09-12T06:00:00Z"), t1 = Date.parse("2026-09-13T13:00:00Z");
+    const x = (t) => L + ((Date.parse(t) - t0) / (t1 - t0)) * (W - L - Rr);
+    const y = (tier) => top + lanes.indexOf(tier) * laneH;
+    let s = "";
+    lanes.forEach((ln) => { s += `<line class="grid" x1="${L}" x2="${W - Rr}" y1="${y(ln)}" y2="${y(ln)}"/><text class="lane-lab" x="${L - 12}" y="${y(ln) + 4}" text-anchor="end">${ln}</text>`; });
+    for (let h = 0; h <= 30; h += 6) { // ticks every 6 h, labelled in KST
+      const t = t0 + h * 3600e3, xx = L + (h * 3600e3 / (t1 - t0)) * (W - L - Rr), k = new Date(t + 9 * 3600e3);
+      s += `<line class="grid" x1="${xx.toFixed(1)}" x2="${xx.toFixed(1)}" y1="${top - 14}" y2="${y("T0") + 14}" stroke-dasharray="2 4"/>`;
+      s += `<text x="${xx.toFixed(1)}" y="${y("T0") + 34}" text-anchor="middle">${k.getUTCMonth() + 1}/${k.getUTCDate()} ${String(k.getUTCHours()).padStart(2, "0")}시</text>`;
+    }
+    P.forEach((p) => {
+      const r = 4 + Math.sqrt(p.add) / 8, need = p.tier === "T2" || p.tier === "T3";
+      s += `<circle class="pr ${need ? "need" : "auto"}" tabindex="0" data-n="${p.n}" cx="${x(p.t).toFixed(1)}" cy="${y(p.tier)}" r="${r.toFixed(1)}"><title>#${p.n} ${esc(p.title)}</title></circle>`;
+    });
+    svgT.innerHTML += s;
+    const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; document.body.appendChild(tip);
+    const byN = Object.fromEntries(P.map((p) => [p.n, p]));
+    const show = (el, cx, cy) => {
+      const p = byN[el.dataset.n], lead = p.lead >= 60 ? `${Math.round(p.lead / 60)}분` : `${p.lead}초`;
+      tip.innerHTML = `<b>#${p.n}</b> ${esc(p.title)}<br>${p.tier}${p.tierAfter !== p.tier ? ` → ${p.tierAfter} (#26 이후)` : ""} · 파일 ${p.files}개 · +${p.add}/−${p.del}<br>열림 → 병합 ${lead} · 리뷰 0건`;
+      tip.hidden = false;
+      tip.style.left = Math.min(cx + 14, innerWidth - tip.offsetWidth - 12) + "px";
+      tip.style.top = Math.max(8, cy - tip.offsetHeight - 12) + "px";
+    };
+    svgT.addEventListener("pointermove", (e) => { const c = e.target.closest(".pr"); if (c) show(c, e.clientX, e.clientY); else tip.hidden = true; });
+    svgT.addEventListener("pointerleave", () => (tip.hidden = true));
+    svgT.addEventListener("focusin", (e) => { const c = e.target.closest(".pr"); if (!c) return; const b = c.getBoundingClientRect(); show(c, b.right, b.top); });
+    svgT.addEventListener("focusout", () => (tip.hidden = true));
+    svgT.querySelectorAll("title").forEach((t) => t.remove()); // the tooltip replaces native titles
+  })();
+
+  const hbars = (rows, total) => rows.map(([label, v, cls, note]) => `<div class="hbar"><span class="l">${label}</span><span class="v">${v} / ${total}</span>
+    <div class="track" role="img" aria-label="${esc(label)} ${v} / ${total}"><div class="fill ${cls}" style="width:${(v / total) * 100}%"></div></div>${note ? `<span class="fine" style="grid-column:1/-1">${note}</span>` : ""}</div>`).join("");
+  $("#ev-gates").innerHTML = hbars([
+    ["work item 없이 들어간 코드 변경 → plan-gate가 막았을 PR", S.nonT0, "", "T0(문서)만 바꾼 3건을 뺀 전부"],
+    ["ai-sdlc 기준 사람 승인이 필요했던 PR (T2·T3)", S.needReview, "", "#26(테스트 자동 탐색) 반영 후 기준"],
+    ["실제로 리뷰를 받은 PR", S.reviews, "ghost", "GitHub 리뷰 기록 0건"],
+    ["에이전트가 혼자 결정하면 안 되는 영역을 건드린 PR (T3)", S.t3, "", `#26 반영 후 ${S.t3After}건 — 테스트 등록만 한 #24가 빠짐`],
+  ], S.prs);
+  $("#ev-defects").innerHTML = hbars([
+    ["잡힌 시점에 그 게이트가 아직 없었다", DEFECTS.noGateYet, "", "결함이 나온 뒤에야 재발 방지 게이트를 만들었다"],
+    ["BLER 곡선만 봐서는 보이지 않는다", DEFECTS.blindToCurve, "", "곡선은 그럴듯한 모양으로 나왔다"],
+    ["사람이 잡았다", DEFECTS.byHuman, "", "아직 자동화되지 않은 판단의 양"],
+    ["이미 있던 게이트가 잡았다", DEFECTS.byExistingGate, "accent", "골든 벡터 · 동작점 게이트"],
+  ], DEFECTS.total);
+
+  /* sidebar: highlight the section in view */
+  const spyIds = ["shape", "stages", "journey", "evidence", "plays", "governance", "start"];
+  const links = [...document.querySelectorAll(".side-group a")];
+  const setActive = () => {
+    let cur = "top";
+    spyIds.forEach((id) => { const el = document.getElementById(id); if (el && el.getBoundingClientRect().top < innerHeight * 0.35) cur = id; });
+    links.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === "#" + cur));
+  };
+  addEventListener("scroll", setActive, { passive: true });
+  setActive();
 
   /* copy CLI */
   $("#copy-cli").onclick = async (e) => {
