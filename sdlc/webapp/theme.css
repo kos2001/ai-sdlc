@@ -7,7 +7,6 @@
 .pipe b{color:var(--c,var(--ink))}
 .pipe.hot{box-shadow:inset 0 0 0 1.5px var(--gate)}
 .col h3 > span:first-child{display:inline-flex;align-items:center;gap:8px}
-.col h3 > span:first-child::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c,var(--faint))}
 .col .wcard{border-left:3px solid var(--c,var(--line))}
 .link{border-top:3px solid var(--c,var(--line))}
 .link h3 > span:first-child{color:var(--c,var(--ink))}
@@ -33,3 +32,11 @@
 :root[lang="en"] :is(h2,h3,.brand,.glance-head span,.live-card b,dialog h2){font-family:var(--body);font-weight:600;letter-spacing:-.015em}
 :root[lang="en"] :is(.tile .num,.pipe b){font-weight:400;letter-spacing:-.01em;font-size:34px}
 :root[lang="en"] .eyebrow{letter-spacing:.12em}
+
+/* icons */
+.mark{display:inline-flex}
+.ico{width:16px;height:16px;flex:none}
+.col h3 .ico,.link h3 .ico,.pipe .ico{color:var(--c,var(--muted))}
+.link h3 > span:first-child,.pipe span{display:inline-flex;align-items:center;gap:6px}
+.st-no{width:28px;height:28px}
+.st-no .ico{width:15px;height:15px;color:#fff}

@@ -2,6 +2,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ai-sdlc</title>
 <meta name="description" content="코드가 병목이 아니게 된 뒤의 소프트웨어 개발 수명주기 — 커밋된 아티팩트, 사람의 게이트, 에이전트가 행동하는 순간의 거버넌스.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cpath d=%22M33.49 13.06A19.0 19.0 0 0 1 47.66 21.24%22 fill=%22none%22 stroke=%22%233D5BD9%22 stroke-width=%227.0%22/%3E%3Cpath d=%22M49.15 23.82A19.0 19.0 0 0 1 49.15 40.18%22 fill=%22none%22 stroke=%22%23D4502E%22 stroke-width=%227.0%22/%3E%3Cpath d=%22M47.66 42.76A19.0 19.0 0 0 1 33.49 50.94%22 fill=%22none%22 stroke=%22%230B8A6B%22 stroke-width=%227.0%22/%3E%3Cpath d=%22M30.51 50.94A19.0 19.0 0 0 1 16.34 42.76%22 fill=%22none%22 stroke=%22%238A4BD0%22 stroke-width=%227.0%22/%3E%3Cpath d=%22M14.85 40.18A19.0 19.0 0 0 1 14.85 23.82%22 fill=%22none%22 stroke=%22%23C9851A%22 stroke-width=%227.0%22/%3E%3Cpath d=%22M16.34 21.24A19.0 19.0 0 0 1 30.51 13.06%22 fill=%22none%22 stroke=%22%23C23A7A%22 stroke-width=%227.0%22/%3E%3Ccircle cx=%2232%22 cy=%2232%22 r=%225.2%22 fill=%22%23E0A548%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
@@ -273,6 +274,17 @@ footer{border-top:1px solid var(--line);padding-block:32px 48px;display:flex;jus
 :root[lang="en"] .stat .num{font-weight:400;letter-spacing:-.01em}
 :root[lang="en"] .eyebrow{letter-spacing:.12em}
 
+/* icons */
+.ico{width:16px;height:16px;flex:none;vertical-align:-3px}
+.lin-step{display:inline-flex;align-items:center;gap:6px}
+.lin-step .ico,#stage-seg .ico{color:var(--c)}
+#stage-seg button{display:inline-flex;align-items:center;gap:6px}
+.compare .st-ico{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--c);color:#fff;margin-right:10px;vertical-align:middle}
+.compare .st-ico .ico{width:16px;height:16px}
+.play-detail .stage{display:inline-flex;align-items:center;gap:6px}
+.loop-svg .node .node-ico{color:var(--c)}
+.loop-svg .node.on .node-ico{color:#fff}
+
 /* shell + sidebar */
 .shell{display:grid;grid-template-columns:236px minmax(0,1fr);gap:clamp(28px,3.4vw,56px);max-width:1440px;margin-inline:auto}
 .shell > main{min-width:0;max-width:1120px}
@@ -338,7 +350,7 @@ footer{border-top:1px solid var(--line);padding-block:32px 48px;display:flex;jus
 <nav class="nav" aria-label="주요 섹션">
   <div class="wrap">
     <a class="brand" href="#top" aria-label="ai-sdlc 처음으로">
-      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="10" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-dasharray="46 17" transform="rotate(-60 13 13)"/><circle cx="13" cy="13" r="3.2" fill="var(--gate)"/></svg>
+      <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true"><path d="M33.49 13.06A19.0 19.0 0 0 1 47.66 21.24" fill="none" stroke="var(--st-plan)" stroke-width="7.0"/><path d="M49.15 23.82A19.0 19.0 0 0 1 49.15 40.18" fill="none" stroke="var(--st-design)" stroke-width="7.0"/><path d="M47.66 42.76A19.0 19.0 0 0 1 33.49 50.94" fill="none" stroke="var(--st-build)" stroke-width="7.0"/><path d="M30.51 50.94A19.0 19.0 0 0 1 16.34 42.76" fill="none" stroke="var(--st-test)" stroke-width="7.0"/><path d="M14.85 40.18A19.0 19.0 0 0 1 14.85 23.82" fill="none" stroke="var(--st-deploy)" stroke-width="7.0"/><path d="M16.34 21.24A19.0 19.0 0 0 1 30.51 13.06" fill="none" stroke="var(--st-maintain)" stroke-width="7.0"/><circle cx="32" cy="32" r="5.2" fill="var(--gate)"/></svg>
       ai-sdlc
     </a>
     <ul>
@@ -357,7 +369,7 @@ footer{border-top:1px solid var(--line);padding-block:32px 48px;display:flex;jus
 <div class="shell">
 <aside class="side" aria-label="섹션 탐색">
   <a class="brand" href="#top" aria-label="ai-sdlc 처음으로">
-    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="10" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-dasharray="46 17" transform="rotate(-60 13 13)"/><circle cx="13" cy="13" r="3.2" fill="var(--gate)"/></svg>
+    <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true"><path d="M33.49 13.06A19.0 19.0 0 0 1 47.66 21.24" fill="none" stroke="var(--st-plan)" stroke-width="7.0"/><path d="M49.15 23.82A19.0 19.0 0 0 1 49.15 40.18" fill="none" stroke="var(--st-design)" stroke-width="7.0"/><path d="M47.66 42.76A19.0 19.0 0 0 1 33.49 50.94" fill="none" stroke="var(--st-build)" stroke-width="7.0"/><path d="M30.51 50.94A19.0 19.0 0 0 1 16.34 42.76" fill="none" stroke="var(--st-test)" stroke-width="7.0"/><path d="M14.85 40.18A19.0 19.0 0 0 1 14.85 23.82" fill="none" stroke="var(--st-deploy)" stroke-width="7.0"/><path d="M16.34 21.24A19.0 19.0 0 0 1 30.51 13.06" fill="none" stroke="var(--st-maintain)" stroke-width="7.0"/><circle cx="32" cy="32" r="5.2" fill="var(--gate)"/></svg>
     ai-sdlc
   </a>
   <div class="lang-switch" role="group" aria-label="Language / 언어"><button type="button" data-setlang="ko" aria-pressed="false">한국어</button><button type="button" data-setlang="en" aria-pressed="false">English</button></div>
@@ -887,6 +899,15 @@ if (LANG === "en") {
   const nameOf = (s) => (s.ko ? `${s.key} · ${s.ko}` : s.key);
   const locale = L("ko-KR", "en-US");
   const hue = (key) => `var(--st-${String(key).toLowerCase()})`;
+  const ICON_PATHS = {
+    plan: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+    design: '<rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M4 10h16M10 10v10"/>',
+    build: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 5l-3 14"/>',
+    test: '<path d="M9 3h6M10 3v6.2L5.3 17.4A2.4 2.4 0 0 0 7.4 21h9.2a2.4 2.4 0 0 0 2.1-3.6L14 9.2V3"/><path d="M7.4 15h9.2"/>',
+    deploy: '<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/>',
+    maintain: '<path d="M3 12h4l2.2-5.5 4.4 11 2.2-5.5H21"/>',
+  };
+  const icon = (key, cls = "ico") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[String(key).toLowerCase()] || ""}</svg>`;
 
   /* hero: cycle-time bars. One set of DOM nodes so flex-grow can animate between states. */
   const bar = $("#flow-bar"), note = $("#flow-note");
@@ -923,7 +944,7 @@ if (LANG === "en") {
   }, 2600);
 
   /* shape: linear chain and the loop */
-  $("#linear").innerHTML = STAGES.map((s, i) => `<span class="lin-step" style="--c:${hue(s.key)}">${s.key}</span>${i < 5 ? '<span class="lin-arrow">→</span>' : ""}`).join("");
+  $("#linear").innerHTML = STAGES.map((s, i) => `<span class="lin-step" style="--c:${hue(s.key)}">${icon(s.key)}${s.key}</span>${i < 5 ? '<span class="lin-arrow">→</span>' : ""}`).join("");
   const svg = $("#loop"), cx = 210, cy = 190, R = 140;
   const pos = STAGES.map((_, i) => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / 6; return [cx + R * Math.cos(a), cy + R * Math.sin(a), a]; });
   let g = `<circle class="ring" cx="${cx}" cy="${cy}" r="${R}"/>`;
@@ -935,7 +956,7 @@ if (LANG === "en") {
   g += `<circle class="core" cx="${cx}" cy="${cy}" r="54"/><text x="${cx}" y="${cy - 4}" text-anchor="middle" font-weight="700" font-size="17">Claude</text><text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="11" style="fill:var(--muted)">artifacts · hooks</text>`;
   pos.forEach((p, i) => {
     const gated = STAGES[i].key !== "Test"; // every stage but Test ends at a human gate
-    g += `<g class="node" style="--c:${hue(STAGES[i].key)}" data-i="${i}" tabindex="0" role="button" aria-label="${esc(L(`${STAGES[i].key} 단계 보기`, `Show the ${STAGES[i].key} stage`))}"><rect x="${(p[0] - 48).toFixed(1)}" y="${(p[1] - 19).toFixed(1)}" width="96" height="38" rx="9"/><text x="${p[0].toFixed(1)}" y="${(p[1] + 5).toFixed(1)}" text-anchor="middle" font-weight="600" font-size="14">${STAGES[i].key}</text>${gated ? `<circle class="gate-dot" cx="${(p[0] + 44).toFixed(1)}" cy="${(p[1] - 15).toFixed(1)}" r="5"/>` : ""}</g>`;
+    g += `<g class="node" style="--c:${hue(STAGES[i].key)}" data-i="${i}" tabindex="0" role="button" aria-label="${esc(L(`${STAGES[i].key} 단계 보기`, `Show the ${STAGES[i].key} stage`))}"><rect x="${(p[0] - 48).toFixed(1)}" y="${(p[1] - 19).toFixed(1)}" width="96" height="38" rx="9"/><svg x="${(p[0] - 40).toFixed(1)}" y="${(p[1] - 8).toFixed(1)}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="node-ico">${ICON_PATHS[STAGES[i].key.toLowerCase()]}</svg><text x="${(p[0] + 8).toFixed(1)}" y="${(p[1] + 5).toFixed(1)}" text-anchor="middle" font-weight="600" font-size="14">${STAGES[i].key}</text>${gated ? `<circle class="gate-dot" cx="${(p[0] + 44).toFixed(1)}" cy="${(p[1] - 15).toFixed(1)}" r="5"/>` : ""}</g>`;
   });
   svg.innerHTML = g;
   function arcPath(i) {
@@ -958,14 +979,14 @@ if (LANG === "en") {
 
   /* stage compare */
   const stageSeg = $("#stage-seg");
-  stageSeg.innerHTML = STAGES.map((s, i) => `<button type="button" style="--c:${hue(s.key)}" data-i="${i}" aria-pressed="${i === 0}">${s.key}</button>`).join("");
+  stageSeg.innerHTML = STAGES.map((s, i) => `<button type="button" style="--c:${hue(s.key)}" data-i="${i}" aria-pressed="${i === 0}">${icon(s.key)}${s.key}</button>`).join("");
   function showStage(i) {
     const s = STAGES[i];
     $("#compare").style.setProperty("--c", hue(s.key));
     $("#compare").innerHTML = `
       <div class="old"><span class="chip legacy"><span class="dot"></span>${L("전통 SDLC", "Traditional SDLC")}</span><h3>${esc(nameOf(s))}</h3><p class="said">${esc(s.old.said)}</p>
         <dl class="kv"><dt>${L("누가", "Who")}</dt><dd>${esc(s.old.owner)}</dd><dt>${L("넘기는 것", "Hands over")}</dt><dd>${esc(s.old.handoff)}</dd><dt>${L("결정 방식", "Decided by")}</dt><dd>${esc(s.old.decide)}</dd></dl></div>
-      <div><span class="chip native"><span class="dot"></span>AI-native SDLC</span><h3><span class="sw-dot"></span>${esc(nameOf(s))}</h3><p class="said">${esc(s.now.said)}</p>
+      <div><span class="chip native"><span class="dot"></span>AI-native SDLC</span><h3><span class="st-ico">${icon(s.key)}</span>${esc(nameOf(s))}</h3><p class="said">${esc(s.now.said)}</p>
         <dl class="kv"><dt>${L("게이트", "Gate")}</dt><dd>${esc(s.now.gate)} <span class="fine">· ${esc(s.now.owner)}</span></dd><dt>${L("커밋되는 것", "Commits")}</dt><dd><code>${esc(s.now.artifact)}</code></dd><dt>${L("다음 단계", "Next stage")}</dt><dd>${esc(s.now.next)}</dd><dt>${L("도구", "Tooling")}</dt><dd><code>${esc(s.now.skill)}</code></dd></dl>
         <div class="art">${s.now.art}</div></div>`;
   }
@@ -1021,7 +1042,7 @@ if (LANG === "en") {
       b.setAttribute("aria-pressed", String(i === id));
     });
     const names = (ids) => ids.length ? ids.map((i) => byId[i].name).join(", ") : L("없음 — 오늘 시작할 수 있습니다", "None — you can start today");
-    $("#play-detail").innerHTML = `<span class="stage">${p.stage} · Play ${String(p.id).padStart(2, "0")}</span>
+    $("#play-detail").innerHTML = `<span class="stage">${icon(p.stage)}${p.stage} · Play ${String(p.id).padStart(2, "0")}</span>
       <h3 style="font-size:22px">${esc(p.name)}${p.ko ? ` <span style="color:var(--muted);font-weight:500;font-size:16px">${esc(p.ko)}</span>` : ""}</h3>
       <p style="color:var(--ink-2)">${esc(p.what)}</p>
       <dl class="kv"><dt>${L("필수 선행", "Requires")}</dt><dd>${esc(names(p.req))}</dd>${p.help.length ? `<dt>${L("도움이 됨", "Helped by")}</dt><dd>${esc(names(p.help))}</dd>` : ""}<dt>${L("이어지는 것", "Leads to")}</dt><dd>${next.length ? esc(next.map((i) => byId[i].name).join(", ")) : L("루프의 끝 — 다시 Plan으로", "End of the loop — back to Plan")}</dd></dl>
