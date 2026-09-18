@@ -110,3 +110,36 @@ def register(sub) -> None:
     s.add_argument("--approver", action="append", default=[])
     s.add_argument("--out")
     s.set_defaults(func=cmd_release_record)
+
+    s = sub.add_parser("serve", help="local web app for this repository (127.0.0.1 only)")
+    s.add_argument("--port", type=int, default=8791)
+    s.set_defaults(func=cmd_serve)
+
+    s = sub.add_parser("demo", help="build a sample repository that exercises the whole loop")
+    s.add_argument("dir", help="empty or missing directory to create")
+    s.set_defaults(func=cmd_demo)
+
+
+def cmd_serve(args) -> int:
+    from . import server
+    root = _root(args)
+    try:
+        httpd = server.serve(root, port=args.port)
+    except OSError as exc:
+        print(f"ERROR cannot listen on 127.0.0.1:{args.port} ({exc.strerror}); pick another with --port", file=sys.stderr)
+        return 1
+    print(f"ai-sdlc: http://127.0.0.1:{httpd.server_address[1]}/  (repository {root})  Ctrl+C to stop")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        httpd.server_close()
+    return 0
+
+
+def cmd_demo(args) -> int:
+    from . import demo
+    root = demo.build(Path(args.dir).resolve())
+    print(f"sample repository: {root}\nnext: python3 -m sdlc --root {root} serve")
+    return 0

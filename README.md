@@ -25,3 +25,25 @@ make check                                                       # tests + artif
 ```
 
 Requires Python 3.11+ and git. No third-party packages.
+
+## Web app
+
+A local dashboard over any repository that uses the artifact chain.
+
+```bash
+python3 -m sdlc demo /tmp/demo-shop                 # optional: a sample repo with every state (sample data)
+python3 -m sdlc --root /tmp/demo-shop serve         # http://127.0.0.1:8791/
+```
+
+| Screen | What it shows |
+|---|---|
+| 개요 | work in progress, gates waiting on a person, median gate wait (from git), AC coverage, open incidents |
+| 작업 보드 | work items by stage: intent → spec → plan → build → done |
+| 작업 상세 | the chain with approvals, an audit trail rebuilt from git history (agent vs human commits), AC coverage, artifact text |
+| 브랜치 점검 | risk tier of the current branch and the same gates CI runs |
+| 인시던트 | control-band breaches and their follow-up intents |
+
+The app can create a draft, create the next stage, and submit (draft → proposed). It has **no approve action**:
+any local process, an agent included, could call an HTTP route, so gate decisions stay a person running
+`python3 -m sdlc approve` in a terminal. The server binds to 127.0.0.1, refuses other Host headers, and accepts
+writes only as JSON with an `X-SDLC: 1` header. `/about` serves the product site (`web/index.html`).
