@@ -1,0 +1,35 @@
+/* Stage colours and English typography. Stage palette passes the dataviz six checks on #FFFFFF and #141D1A. */
+:root{--st-plan:#3D5BD9;--st-design:#D4502E;--st-build:#0B8A6B;--st-test:#8A4BD0;--st-deploy:#C9851A;--st-maintain:#C23A7A}
+@media (prefers-color-scheme:dark){:root{--st-plan:#6680EE;--st-design:#DE6444;--st-build:#24A886;--st-test:#9C70E6;--st-deploy:#B7862A;--st-maintain:#D65F95}}
+
+/* pipeline, board, chain: each stage wears its colour */
+.pipe{border-top:3px solid var(--c,var(--line));background:color-mix(in srgb,var(--c,var(--sunk)) 9%,var(--surface))}
+.pipe b{color:var(--c,var(--ink))}
+.pipe.hot{box-shadow:inset 0 0 0 1.5px var(--gate)}
+.col h3 > span:first-child{display:inline-flex;align-items:center;gap:8px}
+.col h3 > span:first-child::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c,var(--faint))}
+.col .wcard{border-left:3px solid var(--c,var(--line))}
+.link{border-top:3px solid var(--c,var(--line))}
+.link h3 > span:first-child{color:var(--c,var(--ink))}
+.tabs button[aria-selected="true"]{border-bottom-color:var(--c,var(--accent))}
+
+/* overview tiles: a colour per measure */
+.tiles .tile{border-top:3px solid var(--c,var(--line))}
+.tiles .tile:nth-child(1){--c:var(--st-plan)} .tiles .tile:nth-child(2){--c:var(--gate)} .tiles .tile:nth-child(3){--c:var(--st-design)}
+.tiles .tile:nth-child(4){--c:var(--st-test)} .tiles .tile:nth-child(5){--c:var(--st-maintain)}
+
+/* intro: stages numbered in their colour, live cards edged by colour */
+.st-no{background:var(--c,var(--sunk));color:#fff}
+.stage-list li{border-left:3px solid var(--c,var(--line))}
+.live .live-card:nth-child(1){border-top:3px solid var(--gate)} .live .live-card:nth-child(2){border-top:3px solid var(--st-design)}
+.live .live-card:nth-child(3){border-top:3px solid var(--st-build)} .live .live-card:nth-child(4){border-top:3px solid var(--st-maintain)}
+.live .live-card:nth-child(5){border-top:3px solid var(--st-plan)}
+.eyebrow{color:var(--c,var(--accent))}
+
+/* English: an editorial serif for headlines, Geist for text */
+:root[lang="en"]{--display:"Instrument Serif","Iowan Old Style",Georgia,serif;--body:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+:root[lang="en"] body{letter-spacing:-.006em}
+:root[lang="en"] .top h1{font-weight:400;font-size:clamp(32px,3.6vw,44px);letter-spacing:-.015em;line-height:1.05}
+:root[lang="en"] :is(h2,h3,.brand,.glance-head span,.live-card b,dialog h2){font-family:var(--body);font-weight:600;letter-spacing:-.015em}
+:root[lang="en"] :is(.tile .num,.pipe b){font-weight:400;letter-spacing:-.01em;font-size:34px}
+:root[lang="en"] .eyebrow{letter-spacing:.12em}
