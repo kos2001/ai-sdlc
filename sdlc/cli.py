@@ -11,7 +11,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import artifacts, feedback, gates, gitutil, hooks, risk, trace, workitems
+from . import artifacts, bands, events, feedback, gates, gitutil, hooks, release, risk, trace, workitems
 
 
 def _root(args) -> Path:
@@ -189,6 +189,41 @@ def cmd_feedback(args) -> int:
     return 0
 
 
+def cmd_events(args) -> int:
+    found = events.derive(_root(args), args.base, args.head)
+    if args.json:
+        print(json.dumps(found))
+    else:
+        for e in found:
+            print(f"{e['event']:<16} {e['work_id']:<14} -> {e['play']} (skill: {e['skill']})  {e['path']}")
+    return 0
+
+
+def cmd_bands(args) -> int:
+    root = _root(args)
+    metrics = json.loads(Path(args.metrics).read_text(encoding="utf-8"))
+    breaches, missing = bands.check(bands.load_bands(root), metrics)
+    for m in missing:
+        print(f"WARN {m}", file=sys.stderr)
+    if args.action == "check":
+        for b in breaches:
+            print(f"BREACH {b.service}/{b.band}: {b.describe}")
+        return 1 if breaches else 0
+    results = [bands.open_loop(root, b) for b in breaches]
+    print(json.dumps(results, indent=2))
+    return 0
+
+
+def cmd_release_record(args) -> int:
+    text = release.record(_root(args), args.base, args.head, args.pr, args.approver)
+    if args.out:
+        Path(args.out).write_text(text, encoding="utf-8")
+        print(args.out)
+    else:
+        print(text, end="")
+    return 0
+
+
 def cmd_hook(args) -> int:
     return hooks.run(args.event, _root(args))
 
@@ -262,6 +297,25 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("comments", nargs="+", help="JSON from `gh api repos/O/R/pulls/comments --paginate`")
     s.add_argument("--out", help="write the markdown report here")
     s.set_defaults(func=cmd_feedback)
+
+    s = sub.add_parser("events", help="artifact status changes -> next play to run")
+    s.add_argument("--base", required=True)
+    s.add_argument("--head", default="HEAD")
+    s.add_argument("--json", action="store_true")
+    s.set_defaults(func=cmd_events)
+
+    s = sub.add_parser("bands", help="control bands: check metrics, or open incident + intent on breach")
+    s.add_argument("action", choices=("check", "open"))
+    s.add_argument("--metrics", required=True, help="JSON {metric: value or [samples...]}")
+    s.set_defaults(func=cmd_bands)
+
+    s = sub.add_parser("release-record", help="audit record for a release")
+    s.add_argument("--base", required=True, help="previous release ref")
+    s.add_argument("--head", default="HEAD")
+    s.add_argument("--pr", default="")
+    s.add_argument("--approver", action="append", default=[])
+    s.add_argument("--out")
+    s.set_defaults(func=cmd_release_record)
 
     s = sub.add_parser("hook", help="Claude Code hook handler (reads hook JSON on stdin)")
     s.add_argument("event", choices=("pre-tool-use", "post-tool-use", "stop", "user-prompt-submit"))

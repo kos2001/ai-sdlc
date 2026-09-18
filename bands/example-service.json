@@ -1,0 +1,9 @@
+{
+  "service": "example-service",
+  "owner": "Service Owner <owner@example.com>",
+  "tier": "T1",
+  "bands": [
+    {"name": "p95-latency", "metric": "example.p95_ms", "max": 800, "for": 3},
+    {"name": "error-ratio", "metric": "example.error_ratio", "min": 0, "max": 0.01, "for": 2}
+  ]
+}
