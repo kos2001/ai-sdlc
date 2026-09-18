@@ -4,7 +4,7 @@
 <meta name="description" content="코드가 병목이 아니게 된 뒤의 소프트웨어 개발 수명주기 — 커밋된 아티팩트, 사람의 게이트, 에이전트가 행동하는 순간의 거버넌스.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <style>
 :root{
   --ground:#F3F6F4; --surface:#FFFFFF; --sunk:#E8EEEB; --line:#D3DDD9; --line-strong:#B5C4BE;
@@ -12,6 +12,7 @@
   --accent:#0B7A63; --accent-ink:#FFFFFF; --accent-soft:#D5EDE6; --accent-line:#8CCFBD;
   --legacy:#8C8177; --legacy-soft:#ECE7E2; --legacy-line:#CFC6BE;
   --gate:#B7791F; --gate-soft:#F7EBD5; --bad:#B4432F;
+  --st-plan:#3D5BD9; --st-design:#D4502E; --st-build:#0B8A6B; --st-test:#8A4BD0; --st-deploy:#C9851A; --st-maintain:#C23A7A;
   --shadow:0 1px 2px rgba(16,32,27,.06),0 8px 24px -12px rgba(16,32,27,.18);
   --display:"Bricolage Grotesque","IBM Plex Sans KR",ui-sans-serif,system-ui,sans-serif;
   --body:"IBM Plex Sans KR",ui-sans-serif,system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
@@ -24,6 +25,7 @@
   --accent:#3CC9A5; --accent-ink:#06231B; --accent-soft:#12352C; --accent-line:#1F6F5C;
   --legacy:#A3978C; --legacy-soft:#221F1C; --legacy-line:#4A433D;
   --gate:#E0A548; --gate-soft:#2E2413; --bad:#E07A62;
+  --st-plan:#6680EE; --st-design:#DE6444; --st-build:#24A886; --st-test:#9C70E6; --st-deploy:#B7862A; --st-maintain:#D65F95;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.7);
 }}
 :root[data-theme="dark"]{
@@ -32,6 +34,7 @@
   --accent:#3CC9A5; --accent-ink:#06231B; --accent-soft:#12352C; --accent-line:#1F6F5C;
   --legacy:#A3978C; --legacy-soft:#221F1C; --legacy-line:#4A433D;
   --gate:#E0A548; --gate-soft:#2E2413; --bad:#E07A62;
+  --st-plan:#6680EE; --st-design:#DE6444; --st-build:#24A886; --st-test:#9C70E6; --st-deploy:#B7862A; --st-maintain:#D65F95;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.7);
 }
 *{box-sizing:border-box}
@@ -234,6 +237,42 @@ footer{border-top:1px solid var(--line);padding-block:32px 48px;display:flex;jus
 .lang-switch{display:inline-flex;padding:3px;border-radius:9px;background:var(--sunk);border:1px solid var(--line);gap:2px;align-self:start}
 .lang-switch button{border:0;background:transparent;color:var(--muted);font:600 12.5px/1 var(--body);padding:6px 10px;border-radius:7px;cursor:pointer}
 .lang-switch button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+/* stage colours: the AI-native side is coloured by stage, the traditional side stays neutral */
+.lin-step{border-left:3px solid var(--c,var(--legacy-line))}
+.loop-svg .node:not(.on) rect{fill:color-mix(in srgb,var(--c) 10%,var(--surface));stroke:var(--c)}
+.loop-svg .node.on rect{fill:var(--c);stroke:var(--c)}
+.loop-svg .node.on text{fill:#fff}
+#stage-seg button[aria-pressed="true"]{color:var(--c,var(--ink));box-shadow:inset 0 -2px 0 var(--c),var(--shadow)}
+.compare .sw-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);margin-right:8px;vertical-align:middle}
+.compare > div:not(.old){border-top:3px solid var(--c,var(--accent))}
+.seg-bar.agent{background:var(--c,var(--accent));color:#fff}
+.seg-bar.gated{background:color-mix(in srgb,var(--c,var(--accent)) 16%,var(--surface));box-shadow:inset 0 0 0 1.5px var(--c,var(--accent-line));color:var(--ink)}
+.lane:not(.legacy) li.now .n{background:var(--c,var(--accent));border-color:var(--c,var(--accent))}
+.lane:not(.legacy) li .n{border-color:var(--c,var(--line-strong));color:var(--c,var(--muted))}
+.play small{color:var(--c,var(--faint))}
+.play.sel{background:var(--c,var(--accent));border-color:var(--c,var(--accent));color:#fff}
+.play.sel small{color:#fff}
+.play-detail{border-top:3px solid var(--c,var(--accent))}
+.play-detail .stage{color:var(--c,var(--accent))}
+#shape .eyebrow{color:var(--st-plan)} #stages .eyebrow{color:var(--st-design)} #journey .eyebrow{color:var(--st-build)}
+#evidence .eyebrow{color:var(--st-test)} #plays .eyebrow{color:var(--st-deploy)} #governance .eyebrow{color:var(--st-maintain)} #start .eyebrow{color:var(--st-plan)}
+.tier-cards .tcard:nth-child(1){border-top:3px solid var(--st-build)} .tier-cards .tcard:nth-child(2){border-top:3px solid var(--st-plan)}
+.tier-cards .tcard:nth-child(3){border-top:3px solid var(--st-deploy)} .tier-cards .tcard:nth-child(4){border-top:3px solid var(--st-design)}
+.stat:nth-child(1){border-top:3px solid var(--st-plan)} .stat:nth-child(2){border-top:3px solid var(--st-test)}
+.stat:nth-child(3){border-top:3px solid var(--gate)} .stat:nth-child(4){border-top:3px solid var(--st-build)}
+.sw.stages{background:linear-gradient(90deg,var(--st-plan) 0 33%,var(--st-build) 33% 66%,var(--st-test) 66%)}
+
+/* English: an editorial serif for headlines, Geist for text */
+:root[lang="en"]{--display:"Instrument Serif","Iowan Old Style",Georgia,serif;--body:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+:root[lang="en"] body{letter-spacing:-.006em}
+:root[lang="en"] h1,:root[lang="en"] h2{font-weight:400;letter-spacing:-.015em}
+:root[lang="en"] .hero h1{font-size:clamp(46px,7.2vw,92px);line-height:.96}
+:root[lang="en"] .hero h1 em{font-style:italic}
+:root[lang="en"] h2{font-size:clamp(32px,4vw,48px);line-height:1.02}
+:root[lang="en"] h3,:root[lang="en"] :is(.brand,.lane-head b,.tcard .lv b,.tally .val b,.side-card b,.seg-bar b){font-family:var(--body);font-weight:600;letter-spacing:-.015em}
+:root[lang="en"] .stat .num{font-weight:400;letter-spacing:-.01em}
+:root[lang="en"] .eyebrow{letter-spacing:.12em}
+
 /* shell + sidebar */
 .shell{display:grid;grid-template-columns:236px minmax(0,1fr);gap:clamp(28px,3.4vw,56px);max-width:1440px;margin-inline:auto}
 .shell > main{min-width:0;max-width:1120px}
@@ -371,7 +410,7 @@ footer{border-top:1px solid var(--line);padding-block:32px 48px;display:flex;jus
       <p class="flow-note" id="flow-note"></p>
       <div class="flow-legend">
         <span><i class="sw" style="background:var(--legacy-soft);box-shadow:inset 0 0 0 1px var(--legacy-line)"></i>사람의 속도로 진행</span>
-        <span><i class="sw" style="background:var(--accent)"></i>에이전트가 수행</span>
+        <span><i class="sw stages"></i>에이전트가 수행</span>
         <span><i class="sw" style="background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent-line)"></i>에이전트 수행 + 사람 게이트</span>
         <span><i class="sw" style="border:1px dashed var(--accent-line)"></i>되찾은 시간</span>
       </div>
@@ -847,6 +886,7 @@ if (LANG === "en") {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const nameOf = (s) => (s.ko ? `${s.key} · ${s.ko}` : s.key);
   const locale = L("ko-KR", "en-US");
+  const hue = (key) => `var(--st-${String(key).toLowerCase()})`;
 
   /* hero: cycle-time bars. One set of DOM nodes so flex-grow can animate between states. */
   const bar = $("#flow-bar"), note = $("#flow-note");
@@ -862,6 +902,7 @@ if (LANG === "en") {
       el.style.flexBasis = "0";
       el.style.padding = s ? "" : "0";
       el.className = "seg-bar " + (s ? s[2] : "reclaim");
+      el.style.setProperty("--c", lab === "reclaim" ? "var(--accent)" : hue(lab));
       el.innerHTML = s ? `<b>${esc(s[0])}</b><small>${kindNote[s[2]] || ""}</small>` : "";
       el.setAttribute("aria-hidden", s ? "false" : "true");
     });
@@ -882,7 +923,7 @@ if (LANG === "en") {
   }, 2600);
 
   /* shape: linear chain and the loop */
-  $("#linear").innerHTML = STAGES.map((s, i) => `<span class="lin-step">${s.key}</span>${i < 5 ? '<span class="lin-arrow">→</span>' : ""}`).join("");
+  $("#linear").innerHTML = STAGES.map((s, i) => `<span class="lin-step" style="--c:${hue(s.key)}">${s.key}</span>${i < 5 ? '<span class="lin-arrow">→</span>' : ""}`).join("");
   const svg = $("#loop"), cx = 210, cy = 190, R = 140;
   const pos = STAGES.map((_, i) => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / 6; return [cx + R * Math.cos(a), cy + R * Math.sin(a), a]; });
   let g = `<circle class="ring" cx="${cx}" cy="${cy}" r="${R}"/>`;
@@ -894,7 +935,7 @@ if (LANG === "en") {
   g += `<circle class="core" cx="${cx}" cy="${cy}" r="54"/><text x="${cx}" y="${cy - 4}" text-anchor="middle" font-weight="700" font-size="17">Claude</text><text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="11" style="fill:var(--muted)">artifacts · hooks</text>`;
   pos.forEach((p, i) => {
     const gated = STAGES[i].key !== "Test"; // every stage but Test ends at a human gate
-    g += `<g class="node" data-i="${i}" tabindex="0" role="button" aria-label="${esc(L(`${STAGES[i].key} 단계 보기`, `Show the ${STAGES[i].key} stage`))}"><rect x="${(p[0] - 48).toFixed(1)}" y="${(p[1] - 19).toFixed(1)}" width="96" height="38" rx="9"/><text x="${p[0].toFixed(1)}" y="${(p[1] + 5).toFixed(1)}" text-anchor="middle" font-weight="600" font-size="14">${STAGES[i].key}</text>${gated ? `<circle class="gate-dot" cx="${(p[0] + 44).toFixed(1)}" cy="${(p[1] - 15).toFixed(1)}" r="5"/>` : ""}</g>`;
+    g += `<g class="node" style="--c:${hue(STAGES[i].key)}" data-i="${i}" tabindex="0" role="button" aria-label="${esc(L(`${STAGES[i].key} 단계 보기`, `Show the ${STAGES[i].key} stage`))}"><rect x="${(p[0] - 48).toFixed(1)}" y="${(p[1] - 19).toFixed(1)}" width="96" height="38" rx="9"/><text x="${p[0].toFixed(1)}" y="${(p[1] + 5).toFixed(1)}" text-anchor="middle" font-weight="600" font-size="14">${STAGES[i].key}</text>${gated ? `<circle class="gate-dot" cx="${(p[0] + 44).toFixed(1)}" cy="${(p[1] - 15).toFixed(1)}" r="5"/>` : ""}</g>`;
   });
   svg.innerHTML = g;
   function arcPath(i) {
@@ -917,13 +958,14 @@ if (LANG === "en") {
 
   /* stage compare */
   const stageSeg = $("#stage-seg");
-  stageSeg.innerHTML = STAGES.map((s, i) => `<button type="button" data-i="${i}" aria-pressed="${i === 0}">${s.key}</button>`).join("");
+  stageSeg.innerHTML = STAGES.map((s, i) => `<button type="button" style="--c:${hue(s.key)}" data-i="${i}" aria-pressed="${i === 0}">${s.key}</button>`).join("");
   function showStage(i) {
     const s = STAGES[i];
+    $("#compare").style.setProperty("--c", hue(s.key));
     $("#compare").innerHTML = `
       <div class="old"><span class="chip legacy"><span class="dot"></span>${L("전통 SDLC", "Traditional SDLC")}</span><h3>${esc(nameOf(s))}</h3><p class="said">${esc(s.old.said)}</p>
         <dl class="kv"><dt>${L("누가", "Who")}</dt><dd>${esc(s.old.owner)}</dd><dt>${L("넘기는 것", "Hands over")}</dt><dd>${esc(s.old.handoff)}</dd><dt>${L("결정 방식", "Decided by")}</dt><dd>${esc(s.old.decide)}</dd></dl></div>
-      <div><span class="chip native"><span class="dot"></span>AI-native SDLC</span><h3>${esc(nameOf(s))}</h3><p class="said">${esc(s.now.said)}</p>
+      <div><span class="chip native"><span class="dot"></span>AI-native SDLC</span><h3><span class="sw-dot"></span>${esc(nameOf(s))}</h3><p class="said">${esc(s.now.said)}</p>
         <dl class="kv"><dt>${L("게이트", "Gate")}</dt><dd>${esc(s.now.gate)} <span class="fine">· ${esc(s.now.owner)}</span></dd><dt>${L("커밋되는 것", "Commits")}</dt><dd><code>${esc(s.now.artifact)}</code></dd><dt>${L("다음 단계", "Next stage")}</dt><dd>${esc(s.now.next)}</dd><dt>${L("도구", "Tooling")}</dt><dd><code>${esc(s.now.skill)}</code></dd></dl>
         <div class="art">${s.now.art}</div></div>`;
   }
@@ -932,7 +974,7 @@ if (LANG === "en") {
 
   /* journey */
   const laneOld = $("#lane-old"), laneNew = $("#lane-new"), term = $("#term");
-  const item = (x, i, kind) => `<li><span class="n">${i + 1}</span><div><div class="t">${esc(x[0])}</div><div class="d">${esc(x[1])}</div>
+  const item = (x, i, kind) => `<li style="--c:${hue(STAGES[i].key)}"><span class="n">${i + 1}</span><div><div class="t">${esc(x[0])}</div><div class="d">${esc(x[1])}</div>
     <div class="meta">${x[2].map((m) => `<span class="chip ${kind}">${esc(m)}</span>`).join("")}${x[3] ? (kind === "legacy" ? `<span class="chip wait">${L("대기", "waiting")} · ${esc(x[3])}</span>` : `<span class="chip gate"><span class="dot"></span>${esc(x[3])}</span>`) : ""}</div></div></li>`;
   laneOld.innerHTML = JOURNEY.map((j, i) => item(j.old, i, "legacy")).join("");
   laneNew.innerHTML = JOURNEY.map((j, i) => item(j.now, i, "native")).join("");
@@ -967,11 +1009,12 @@ if (LANG === "en") {
   /* plays */
   const grid = $("#play-grid"), wrap = $("#plays-wrap");
   const rowName = { 1: L("선행 없음", "No prereqs"), 2: L("2단계", "Row 2"), 3: L("3단계", "Row 3"), 4: L("4단계", "Row 4"), 5: L("5단계", "Row 5") };
-  grid.innerHTML = [1, 2, 3, 4, 5].map((r) => `<div class="tier-row"><span class="lvl">${rowName[r]}</span><div class="cells">${PLAYS.filter((p) => p.row === r).map((p) => `<button type="button" class="play" data-id="${p.id}" aria-pressed="false"><small>${String(p.id).padStart(2, "0")}</small>${esc(p.name)}</button>`).join("")}</div></div>`).join("");
+  grid.innerHTML = [1, 2, 3, 4, 5].map((r) => `<div class="tier-row"><span class="lvl">${rowName[r]}</span><div class="cells">${PLAYS.filter((p) => p.row === r).map((p) => `<button type="button" class="play" style="--c:${hue(p.stage)}" data-id="${p.id}" aria-pressed="false"><small>${String(p.id).padStart(2, "0")}</small>${esc(p.name)}</button>`).join("")}</div></div>`).join("");
   const byId = Object.fromEntries(PLAYS.map((p) => [p.id, p]));
   function showPlay(id) {
     const p = byId[id], next = PLAYS.filter((q) => q.req.includes(id) || q.help.includes(id)).map((q) => q.id);
     wrap.classList.add("focus");
+    $("#play-detail").style.setProperty("--c", hue(p.stage));
     grid.querySelectorAll(".play").forEach((b) => {
       const i = +b.dataset.id;
       b.className = "play" + (i === id ? " sel" : p.req.includes(i) ? " req" : p.help.includes(i) ? " help" : next.includes(i) ? " next" : "");
