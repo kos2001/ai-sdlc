@@ -11,7 +11,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import artifacts, gitutil, hooks, risk, trace, workitems
+from . import artifacts, feedback, gates, gitutil, hooks, risk, trace, workitems
 
 
 def _root(args) -> Path:
@@ -163,6 +163,32 @@ def cmd_risk(args) -> int:
     return 0
 
 
+def _gate(result: gates.GateResult) -> int:
+    stream = sys.stdout if result.ok else sys.stderr
+    for m in result.messages:
+        print(m, file=stream)
+    return 0 if result.ok else 1
+
+
+def cmd_plan_gate(args) -> int:
+    return _gate(gates.plan_gate(_root(args), args.base, args.head, " ".join(args.refs)))
+
+
+def cmd_eval_guard(args) -> int:
+    return _gate(gates.eval_guard(_root(args), args.base, args.head))
+
+
+def cmd_feedback(args) -> int:
+    text = feedback.report(feedback.collect(feedback.load_comments([Path(f) for f in args.comments])))
+    if args.out:
+        Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.out).write_text(text, encoding="utf-8")
+        print(args.out)
+    else:
+        print(text, end="")
+    return 0
+
+
 def cmd_hook(args) -> int:
     return hooks.run(args.event, _root(args))
 
@@ -220,6 +246,22 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--json", action="store_true")
     s.add_argument("paths", nargs="*")
     s.set_defaults(func=cmd_risk)
+
+    s = sub.add_parser("plan-gate", help="non-T0 changes need a work item with an accepted plan.md")
+    s.add_argument("--base", default="origin/main")
+    s.add_argument("--head", default="HEAD")
+    s.add_argument("--refs", nargs="*", default=[], help="branch name / PR title to search for W-ids")
+    s.set_defaults(func=cmd_plan_gate)
+
+    s = sub.add_parser("eval-guard", help="fail when tests/evals are deleted, skipped, or untagged")
+    s.add_argument("--base", default="origin/main")
+    s.add_argument("--head", default="HEAD")
+    s.set_defaults(func=cmd_eval_guard)
+
+    s = sub.add_parser("feedback", help="tagged PR review comments -> rule/eval candidates")
+    s.add_argument("comments", nargs="+", help="JSON from `gh api repos/O/R/pulls/comments --paginate`")
+    s.add_argument("--out", help="write the markdown report here")
+    s.set_defaults(func=cmd_feedback)
 
     s = sub.add_parser("hook", help="Claude Code hook handler (reads hook JSON on stdin)")
     s.add_argument("event", choices=("pre-tool-use", "post-tool-use", "stop", "user-prompt-submit"))
