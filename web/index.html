@@ -1,0 +1,678 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ai-sdlc</title>
+<meta name="description" content="코드가 병목이 아니게 된 뒤의 소프트웨어 개발 수명주기 — 커밋된 아티팩트, 사람의 게이트, 에이전트가 행동하는 순간의 거버넌스.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --ground:#F3F6F4; --surface:#FFFFFF; --sunk:#E8EEEB; --line:#D3DDD9; --line-strong:#B5C4BE;
+  --ink:#10201B; --ink-2:#2C3C37; --muted:#5A6B65; --faint:#8A9994;
+  --accent:#0B7A63; --accent-ink:#FFFFFF; --accent-soft:#D5EDE6; --accent-line:#8CCFBD;
+  --legacy:#8C8177; --legacy-soft:#ECE7E2; --legacy-line:#CFC6BE;
+  --gate:#B7791F; --gate-soft:#F7EBD5; --bad:#B4432F;
+  --shadow:0 1px 2px rgba(16,32,27,.06),0 8px 24px -12px rgba(16,32,27,.18);
+  --display:"Bricolage Grotesque","IBM Plex Sans KR",ui-sans-serif,system-ui,sans-serif;
+  --body:"IBM Plex Sans KR",ui-sans-serif,system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px; --wrap:1180px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0D1412; --surface:#141D1A; --sunk:#101916; --line:#23312C; --line-strong:#33443E;
+  --ink:#E3ECE8; --ink-2:#C4D1CC; --muted:#93A39D; --faint:#667670;
+  --accent:#3CC9A5; --accent-ink:#06231B; --accent-soft:#12352C; --accent-line:#1F6F5C;
+  --legacy:#A3978C; --legacy-soft:#221F1C; --legacy-line:#4A433D;
+  --gate:#E0A548; --gate-soft:#2E2413; --bad:#E07A62;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --ground:#0D1412; --surface:#141D1A; --sunk:#101916; --line:#23312C; --line-strong:#33443E;
+  --ink:#E3ECE8; --ink-2:#C4D1CC; --muted:#93A39D; --faint:#667670;
+  --accent:#3CC9A5; --accent-ink:#06231B; --accent-soft:#12352C; --accent-line:#1F6F5C;
+  --legacy:#A3978C; --legacy-soft:#221F1C; --legacy-line:#4A433D;
+  --gate:#E0A548; --gate-soft:#2E2413; --bad:#E07A62;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 15px/1.65 var(--body);-webkit-font-smoothing:antialiased;padding-inline:clamp(16px,4vw,40px)}
+.wrap{max-width:var(--wrap);margin-inline:auto}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;text-wrap:balance;margin:0;color:var(--ink)}
+h2{font-size:clamp(26px,3.4vw,38px);line-height:1.12;font-weight:700}
+h3{font-size:18px;line-height:1.3;font-weight:700}
+p{margin:0}
+code,.mono{font-family:var(--mono);font-size:.86em}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lede{color:var(--muted);max-width:62ch;font-size:16px}
+section{padding-block:clamp(56px,8vw,96px);border-top:1px solid var(--line)}
+.sec-head{display:grid;gap:12px;margin-bottom:32px;max-width:760px}
+
+/* nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;margin-inline:calc(-1*clamp(16px,4vw,40px));padding:12px clamp(16px,4vw,40px);background:color-mix(in srgb,var(--ground) 86%,transparent);backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:24px}
+.brand{display:flex;align-items:center;gap:10px;font:800 17px/1 var(--display);letter-spacing:-.02em;text-decoration:none}
+.brand svg{flex:none}
+.nav ul{display:flex;gap:4px;list-style:none;margin:0 0 0 auto;padding:0;overflow-x:auto;scrollbar-width:none}
+.nav ul a{display:block;padding:6px 10px;border-radius:6px;text-decoration:none;color:var(--muted);font-size:13.5px;white-space:nowrap}
+.nav ul a:hover{color:var(--ink);background:var(--sunk)}
+@media (max-width:760px){.nav ul{display:none}}
+
+/* buttons & segmented */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font:600 14px/1 var(--body);cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--ink-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.06)}
+.seg{display:inline-flex;padding:3px;border-radius:9px;background:var(--sunk);border:1px solid var(--line);gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;color:var(--muted);font:500 13.5px/1 var(--body);padding:8px 12px;border-radius:7px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.seg button[data-kind="legacy"][aria-pressed="true"]{color:var(--legacy)}
+.seg button[data-kind="native"][aria-pressed="true"]{color:var(--accent)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;font:600 11.5px/1.4 var(--mono);border:1px solid var(--line);color:var(--muted);background:var(--surface);white-space:nowrap}
+.chip.gate{color:var(--gate);border-color:color-mix(in srgb,var(--gate) 40%,transparent);background:var(--gate-soft)}
+.chip.native{color:var(--accent);border-color:var(--accent-line);background:var(--accent-soft)}
+.chip.legacy{color:var(--legacy);border-color:var(--legacy-line);background:var(--legacy-soft)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+
+/* hero */
+.hero{padding-block:clamp(40px,7vw,84px) clamp(48px,7vw,80px);display:grid;gap:40px}
+.hero h1{font-size:clamp(38px,6.2vw,76px);line-height:1.02;font-weight:800;max-width:15ch}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero .lede{font-size:clamp(16px,1.6vw,18.5px)}
+.hero-cta{display:flex;gap:10px;flex-wrap:wrap}
+.flow-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:clamp(16px,2.6vw,28px);display:grid;gap:20px}
+.flow-top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.flow-top .cap{font:600 13px/1.4 var(--mono);color:var(--muted)}
+.bar{display:flex;height:64px;border-radius:8px;overflow:hidden;gap:3px}
+.seg-bar{position:relative;display:flex;flex-direction:column;justify-content:flex-end;padding:8px 10px;min-width:0;border-radius:6px;transition:flex-grow .7s cubic-bezier(.7,0,.2,1),background .5s;overflow:hidden}
+.seg-bar b{font:600 12.5px/1.2 var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg-bar small{font:500 11px/1.2 var(--mono);opacity:.75;white-space:nowrap}
+.seg-bar.human{background:var(--legacy-soft);color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--legacy-line)}
+.seg-bar.agent{background:var(--accent);color:var(--accent-ink)}
+.seg-bar.gated{background:var(--accent-soft);color:var(--ink);box-shadow:inset 0 0 0 1px var(--accent-line)}
+.seg-bar.reclaim{background:repeating-linear-gradient(135deg,transparent 0 7px,color-mix(in srgb,var(--accent) 22%,transparent) 7px 9px);color:var(--accent);border:1px dashed var(--accent-line)}
+.flow-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.flow-legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.flow-note{font-size:14px;color:var(--ink-2);min-height:3.2em}
+.flow-note strong{color:var(--ink)}
+.fine{font-size:12px;color:var(--faint)}
+
+/* shape: linear vs loop */
+.shape{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+@media (max-width:860px){.shape{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:grid;gap:16px;align-content:start}
+.panel.legacy{background:var(--legacy-soft);border-color:var(--legacy-line)}
+.panel .tag{justify-self:start}
+.linear{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lin-step{padding:10px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--legacy-line);font-weight:600;font-size:13.5px}
+.lin-arrow{color:var(--legacy);font-family:var(--mono)}
+.handoffs{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.handoffs li{display:grid;grid-template-columns:auto 1fr;gap:10px;font-size:13.5px;color:var(--ink-2)}
+.handoffs .mono{color:var(--legacy)}
+.loop-svg{width:100%;height:auto;max-width:420px;justify-self:center;display:block}
+.loop-svg text{font-family:var(--body);fill:var(--ink)}
+.loop-svg .node{cursor:pointer}
+.loop-svg .node rect{fill:var(--surface);stroke:var(--accent-line);stroke-width:1.2;transition:fill .2s}
+.loop-svg .node.on rect{fill:var(--accent);stroke:var(--accent)}
+.loop-svg .node.on text{fill:var(--accent-ink)}
+.loop-svg .ring{fill:none;stroke:var(--accent-line);stroke-width:1.5;stroke-dasharray:3 6}
+.loop-svg .arc{fill:none;stroke:var(--accent);stroke-width:2.2}
+.loop-svg .core{fill:var(--accent-soft);stroke:var(--accent-line)}
+.loop-svg .gate-dot{fill:var(--gate)}
+.node-detail{border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px;font-size:14px;min-height:120px}
+.node-detail .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* stage compare */
+.stage-tabs{margin-bottom:18px;overflow-x:auto;max-width:100%}
+.compare{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+@media (max-width:760px){.compare{grid-template-columns:1fr}}
+.compare > div{padding:24px;display:grid;gap:14px;align-content:start}
+.compare .old{background:var(--legacy-soft);border-right:1px solid var(--line)}
+@media (max-width:760px){.compare .old{border-right:0;border-bottom:1px solid var(--line)}}
+.compare h3{font-size:20px}
+.compare .said{font-size:15px;color:var(--ink-2);max-width:48ch}
+.kv{display:grid;grid-template-columns:7.5em 1fr;gap:8px 14px;font-size:13.5px;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;color:var(--ink)}
+.art{font:500 12.5px/1.6 var(--mono);background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:12px 14px;white-space:pre;overflow-x:auto;color:var(--ink-2)}
+.art .k{color:var(--accent)} .art .g{color:var(--gate)} .art .c{color:var(--faint)}
+
+/* journey */
+.j-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.j-progress{flex:1 1 200px;height:4px;background:var(--line);border-radius:4px;overflow:hidden;min-width:120px}
+.j-progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+.j-step-label{font:600 13px/1 var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.lanes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:20px}
+@media (max-width:900px){.lanes{grid-template-columns:1fr}}
+.lane{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);display:flex;flex-direction:column}
+.lane.legacy{background:var(--legacy-soft);border-color:var(--legacy-line)}
+.lane-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.lane-head b{font:700 15px/1.2 var(--display)}
+.lane ol{list-style:none;margin:0;padding:8px}
+.lane li{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:10px;border-radius:9px;opacity:.42;transition:opacity .3s,background .3s}
+.lane li.past{opacity:.75}
+.lane li.now{opacity:1;background:var(--surface);box-shadow:var(--shadow)}
+.lane.legacy li.now{background:var(--surface)}
+.lane li .n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:600 11.5px/1 var(--mono);border:1px solid var(--line-strong);color:var(--muted);background:var(--surface)}
+.lane li.now .n{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.lane.legacy li.now .n{background:var(--legacy);border-color:var(--legacy);color:#fff}
+.lane li .t{font-weight:600;font-size:14px}
+.lane li .d{font-size:13px;color:var(--muted)}
+.lane li .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.wait{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,transparent);background:transparent}
+.term{border-top:1px solid var(--line);background:#0B1210;color:#CFE3DB;font:500 12.5px/1.7 var(--mono);padding:14px 16px;min-height:168px;max-height:240px;overflow:auto;margin-top:auto}
+.term .h{color:#7FD8BF} .term .y{color:#E7B35A} .term .m{color:#6F837C}
+.term div{white-space:pre-wrap;word-break:break-word}
+.tally{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
+@media (max-width:640px){.tally{grid-template-columns:1fr}}
+.tally div{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface)}
+.tally .lab{font-size:12.5px;color:var(--muted)}
+.tally .val{display:flex;align-items:baseline;gap:10px;margin-top:4px;font-variant-numeric:tabular-nums}
+.tally .val b{font:700 26px/1 var(--display)}
+.tally .val .o{color:var(--legacy)} .tally .val .x{color:var(--accent)}
+
+/* plays */
+.plays{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px}
+@media (max-width:900px){.plays{grid-template-columns:1fr}}
+.tiers{display:grid;gap:10px}
+.tier-row{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start}
+.tier-row .lvl{font:600 11px/1.3 var(--mono);color:var(--faint);padding-top:10px;text-transform:uppercase;letter-spacing:.06em}
+.tier-row .cells{display:flex;flex-wrap:wrap;gap:8px}
+.play{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 12px;font:600 13.5px/1.25 var(--body);cursor:pointer;color:var(--ink);display:inline-flex;gap:8px;align-items:center;transition:border-color .2s,background .2s,opacity .2s}
+.play small{font:600 10.5px/1 var(--mono);color:var(--faint)}
+.play:hover{border-color:var(--accent-line)}
+.play.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.play.sel small{color:var(--accent-ink);opacity:.8}
+.play.req{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.play.help{border-style:dashed;border-color:var(--accent)}
+.play.next{background:var(--accent-soft);border-color:var(--accent-line)}
+.plays.focus .play:not(.sel):not(.req):not(.help):not(.next){opacity:.38}
+.play-detail{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:22px;display:grid;gap:14px;align-content:start}
+.play-detail .stage{font:600 12px/1 var(--mono);color:var(--accent);text-transform:uppercase;letter-spacing:.08em}
+.play-detail ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px;color:var(--ink-2)}
+.legend-mini{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:14px}
+.legend-mini span{display:inline-flex;gap:6px;align-items:center}
+.legend-mini i{width:16px;height:12px;border-radius:3px;display:inline-block;border:1.5px solid var(--accent)}
+
+/* governance */
+.tier-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.tier-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.tier-cards{grid-template-columns:1fr}}
+.tcard{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--surface);display:grid;gap:10px;align-content:start}
+.tcard .lv{display:flex;align-items:baseline;justify-content:space-between}
+.tcard .lv b{font:800 28px/1 var(--display)}
+.meter{display:flex;gap:3px}
+.meter i{flex:1;height:5px;border-radius:3px;background:var(--line)}
+.meter i.on{background:var(--gate)}
+.tcard p{font-size:13.5px;color:var(--ink-2)}
+.tcard .ex{font:500 12px/1.6 var(--mono);color:var(--muted)}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin-top:28px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px/1.3 var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td.o{color:var(--legacy)}
+
+/* start */
+.start{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:28px;align-items:start}
+@media (max-width:860px){.start{grid-template-columns:1fr}}
+.cli{background:#0B1210;color:#CFE3DB;border-radius:14px;overflow:hidden;border:1px solid #1D2A26}
+.cli-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #1D2A26;font:600 12px/1 var(--mono);color:#6F837C}
+.cli-head button{background:transparent;border:1px solid #2A3A35;color:#CFE3DB;border-radius:6px;padding:5px 9px;font:600 11.5px/1 var(--mono);cursor:pointer}
+.cli pre{margin:0;padding:16px;font:500 13px/1.75 var(--mono);overflow-x:auto}
+.cli .c{color:#6F837C} .cli .p{color:#7FD8BF}
+.steps{display:grid;gap:14px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{display:grid;grid-template-columns:32px 1fr;gap:12px;counter-increment:s}
+.steps li::before{content:counter(s);width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font:600 12px/1 var(--mono)}
+.steps b{display:block;font-size:14.5px}
+.steps span{font-size:13.5px;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-block:32px 48px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+
+<nav class="nav" aria-label="주요 섹션">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="ai-sdlc 처음으로">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="10" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-dasharray="46 17" transform="rotate(-60 13 13)"/><circle cx="13" cy="13" r="3.2" fill="var(--gate)"/></svg>
+      ai-sdlc
+    </a>
+    <ul>
+      <li><a href="#shape">루프</a></li>
+      <li><a href="#stages">단계 비교</a></li>
+      <li><a href="#journey">작업의 여정</a></li>
+      <li><a href="#plays">12개 플레이</a></li>
+      <li><a href="#governance">거버넌스</a></li>
+      <li><a href="#start">시작하기</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="wrap" id="top">
+  <header class="hero">
+    <div style="display:grid;gap:22px">
+      <span class="eyebrow">AI-native software lifecycle</span>
+      <h1>코드는 더 이상 <em>병목</em>이 아니다</h1>
+      <p class="lede">에이전트가 빌드를 몇 주에서 몇 시간으로 줄였지만, 그 앞뒤의 계획·리뷰·배포는 여전히 사람의 속도로 움직입니다. ai-sdlc는 모든 단계를 <strong>커밋된 아티팩트</strong>로 끝내고, 사람은 <strong>게이트</strong>에서만 판단하며, 정책은 에이전트가 <strong>행동하는 순간</strong>에 집행합니다.</p>
+      <div class="hero-cta">
+        <a class="btn primary" href="#journey">한 작업의 여정 보기 →</a>
+        <a class="btn" href="#start">저장소에 적용하기</a>
+      </div>
+    </div>
+
+    <div class="flow-card" aria-labelledby="flow-title">
+      <div class="flow-top">
+        <span class="cap" id="flow-title">사이클 타임 · 한 기능이 아이디어에서 운영까지</span>
+        <div class="seg" role="group" aria-label="프로세스 선택" id="flow-seg">
+          <button type="button" data-flow="0" data-kind="legacy" aria-pressed="true">전통 SDLC</button>
+          <button type="button" data-flow="1" aria-pressed="false">에이전트만 도입</button>
+          <button type="button" data-flow="2" data-kind="native" aria-pressed="false">AI-native SDLC</button>
+        </div>
+      </div>
+      <div class="bar" id="flow-bar" aria-live="polite"></div>
+      <p class="flow-note" id="flow-note"></p>
+      <div class="flow-legend">
+        <span><i class="sw" style="background:var(--legacy-soft);box-shadow:inset 0 0 0 1px var(--legacy-line)"></i>사람의 속도로 진행</span>
+        <span><i class="sw" style="background:var(--accent)"></i>에이전트가 수행</span>
+        <span><i class="sw" style="background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent-line)"></i>에이전트 수행 + 사람 게이트</span>
+        <span><i class="sw" style="border:1px dashed var(--accent-line)"></i>되찾은 시간</span>
+      </div>
+      <p class="fine">막대 길이는 구조를 보여 주는 예시 비율이며 측정값이 아닙니다.</p>
+    </div>
+  </header>
+
+  <section id="shape" aria-labelledby="shape-h">
+    <div class="sec-head">
+      <span class="eyebrow">Shape</span>
+      <h2 id="shape-h">직선에서 루프로</h2>
+      <p class="lede">전통 SDLC는 역할마다 단계를 나눠 갖고 문서·티켓·사인오프로 일을 넘깁니다. AI-native SDLC에서는 같은 여섯 단계가 Claude를 중심으로 도는 루프가 되고, 한 단계가 커밋한 아티팩트가 다음 단계를 깨웁니다. 사람은 루프 위에서 발의하고, 지시하고, 통제합니다.</p>
+    </div>
+    <div class="shape">
+      <div class="panel legacy">
+        <span class="chip legacy tag"><span class="dot"></span>전통 SDLC · 선형</span>
+        <div class="linear" id="linear"></div>
+        <ul class="handoffs">
+          <li><span class="mono">PM → 아키텍트</span>PRD 문서와 사인오프 회의</li>
+          <li><span class="mono">아키텍트 → 엔지니어</span>설계서를 해석해 티켓으로 쪼갬</li>
+          <li><span class="mono">엔지니어 → QA</span>단계 경계의 품질 게이트, 결함 티켓</li>
+          <li><span class="mono">QA → 릴리스</span>주간 변경관리위원회(CAB)</li>
+          <li><span class="mono">운영 → PM</span>버그 리포트가 다음 분기 백로그로</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <span class="chip native tag"><span class="dot"></span>AI-native SDLC · 루프</span>
+        <svg class="loop-svg" id="loop" viewBox="0 0 420 380" role="img" aria-label="여섯 단계가 Claude를 중심으로 도는 루프"></svg>
+        <div class="node-detail" id="node-detail" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="stages" aria-labelledby="stages-h">
+    <div class="sec-head">
+      <span class="eyebrow">Stage by stage</span>
+      <h2 id="stages-h">같은 여섯 단계, 다른 계약</h2>
+      <p class="lede">단계 이름은 그대로입니다. 바뀌는 것은 단계가 무엇으로 끝나고, 누가 무엇을 판단하고, 다음 단계가 어떻게 시작되는지입니다.</p>
+    </div>
+    <div class="stage-tabs"><div class="seg" role="group" aria-label="단계 선택" id="stage-seg"></div></div>
+    <div class="compare" id="compare"></div>
+  </section>
+
+  <section id="journey" aria-labelledby="journey-h">
+    <div class="sec-head">
+      <span class="eyebrow">One work item · W-0142</span>
+      <h2 id="journey-h">한 작업이 지나가는 길</h2>
+      <p class="lede">"EU 사용자의 결제가 느리다"는 한 건의 요구가 두 프로세스를 나란히 통과합니다. 왼쪽은 문서와 회의로, 오른쪽은 커밋과 게이트로 넘어갑니다. 오른쪽 터미널은 이 저장소의 <code>sdlc</code> CLI가 실제로 남기는 기록 형식입니다.</p>
+    </div>
+    <div class="j-controls">
+      <button class="btn" type="button" id="j-prev" aria-label="이전 단계">←</button>
+      <button class="btn primary" type="button" id="j-play">▶ 재생</button>
+      <button class="btn" type="button" id="j-next" aria-label="다음 단계">→</button>
+      <span class="j-step-label" id="j-label"></span>
+      <div class="j-progress" aria-hidden="true"><i id="j-bar"></i></div>
+    </div>
+    <div class="lanes">
+      <div class="lane legacy">
+        <div class="lane-head"><b>전통 SDLC</b><span class="chip legacy">문서 · 티켓 · 회의</span></div>
+        <ol id="lane-old"></ol>
+      </div>
+      <div class="lane">
+        <div class="lane-head"><b>AI-native SDLC</b><span class="chip native">커밋된 아티팩트 · 게이트</span></div>
+        <ol id="lane-new"></ol>
+        <div class="term" id="term" role="log" aria-label="커밋 기록"></div>
+      </div>
+    </div>
+    <div class="tally" id="tally"></div>
+  </section>
+
+  <section id="plays" aria-labelledby="plays-h">
+    <div class="sec-head">
+      <span class="eyebrow">Adoption graph</span>
+      <h2 id="plays-h">12개의 플레이, 어디서부터든</h2>
+      <p class="lede">플레이는 모듈식입니다. 맨 윗줄은 선행 조건이 없어 오늘 시작할 수 있고, 아래로 내려갈수록 위의 것을 딛고 섭니다. 플레이를 누르면 필요한 것과 이어지는 것이 드러납니다.</p>
+    </div>
+    <div class="plays" id="plays-wrap">
+      <div>
+        <div class="tiers" id="play-grid"></div>
+        <div class="legend-mini">
+          <span><i></i>필수 선행</span>
+          <span><i style="border-style:dashed"></i>도움이 됨</span>
+          <span><i style="background:var(--accent-soft);border-color:var(--accent-line)"></i>이것을 딛고 서는 플레이</span>
+        </div>
+      </div>
+      <aside class="play-detail" id="play-detail" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <section id="governance" aria-labelledby="gov-h">
+    <div class="sec-head">
+      <span class="eyebrow">Governance</span>
+      <h2 id="gov-h">통제 목표는 그대로, 집행 수단을 바꾼다</h2>
+      <p class="lede">모든 줄을 사람이 읽는 리뷰는 에이전트의 산출량을 따라갈 수 없습니다. 대신 변경의 위험 등급이 사람의 주의가 머물 곳을 정합니다. 등급은 경로 규칙으로 결정적으로 계산되고, 에이전트는 올릴 수만 있고 내릴 수는 없습니다.</p>
+    </div>
+    <div class="tier-cards" id="tier-cards"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>통제 목표</th><th>전통 SDLC의 집행</th><th>ai-sdlc의 집행</th><th>증적</th></tr></thead>
+        <tbody id="control-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="start" aria-labelledby="start-h">
+    <div class="start">
+      <div class="sec-head" style="margin:0">
+        <span class="eyebrow">Get started</span>
+        <h2 id="start-h">첫 작업을 루프에 태우기</h2>
+        <p class="lede">Python 3.11과 git만 있으면 됩니다. 외부 패키지는 쓰지 않습니다. 에이전트는 <code>submit</code>까지만 하고, <code>approve</code>는 사람이 합니다.</p>
+        <ol class="steps">
+          <li><div><b>의도를 적는다</b><span>근거(티켓·지표·인시던트)가 붙은 intent.md 초안</span></div></li>
+          <li><div><b>게이트를 통과시킨다</b><span>제품 오너가 수락해야 명세가 시작됩니다</span></div></li>
+          <li><div><b>계획이 승인된 뒤에만 코드를 쓴다</b><span>CI의 plan-gate가 강제합니다</span></div></li>
+          <li><div><b>수락 기준을 테스트에 묶는다</b><span><code>W-0142:AC-1</code> 태그로 추적</span></div></li>
+        </ol>
+      </div>
+      <div class="cli">
+        <div class="cli-head"><span>~/your-repo</span><button type="button" id="copy-cli">복사</button></div>
+<pre id="cli-text"><span class="c"># Plan — 의도를 캡처한다</span>
+<span class="p">$</span> python3 -m sdlc new "Checkout latency for EU users" --tier T2
+work/2026/W-0142-checkout-latency-for-eu-users/intent.md
+<span class="p">$</span> python3 -m sdlc submit W-0142 --stage intent
+
+<span class="c"># 사람의 게이트 — 제품 오너</span>
+<span class="p">$</span> python3 -m sdlc approve W-0142 --stage intent --role product-owner
+
+<span class="c"># Design → Build(plan mode)</span>
+<span class="p">$</span> python3 -m sdlc stage W-0142 spec
+<span class="p">$</span> python3 -m sdlc stage W-0142 plan
+
+<span class="c"># Test / Deploy — CI가 돌리는 것과 같은 게이트</span>
+<span class="p">$</span> python3 -m sdlc risk --base origin/main
+<span class="p">$</span> python3 -m sdlc plan-gate --base origin/main --refs "$(git branch --show-current)"
+<span class="p">$</span> python3 -m sdlc trace W-0142 --strict</pre>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <span>ai-sdlc · Anthropic Applied AI의 AI-native SDLC 플레이북을 구현한 참조 저장소</span>
+  <span class="mono">python3 -m sdlc --help</span>
+</footer>
+
+<script>
+const STAGES = [
+  { key: "Plan", ko: "계획",
+    old: { said: "요구사항을 위원회에서 모으고, 워크숍과 사인오프를 거쳐 손으로 정리한다.", owner: "PM", handoff: "PRD 문서", decide: "사인오프 회의" },
+    now: { said: "Claude가 티켓·지표·인시던트에서 페인포인트를 직접 종합해 intent.md에 담는다. 사람이 읽을 수 있고, 기계가 실행할 수 있다.",
+      owner: "제품 오너", artifact: "intent.md", gate: "제품 오너가 수락", next: "수락 커밋이 Design을 깨운다", skill: "capture-intent",
+      art: '<span class="c">---</span>\n<span class="k">id</span>: W-0142\n<span class="k">type</span>: intent\n<span class="k">status</span>: <span class="g">proposed</span>\n<span class="k">sources</span>:\n  - kind: ticket\n    ref: SUP-8812\n  - kind: metric\n    ref: checkout.p95_ms &gt; 1200 (7d)\n<span class="k">risk_tier</span>: T2\n<span class="c">---</span>' } },
+  { key: "Design", ko: "설계",
+    old: { said: "분석가가 명세를 쓰고, 설계자가 그것을 해석해 다시 문서로 옮긴다.", owner: "분석가 · 아키텍트", handoff: "설계서", decide: "설계 리뷰 위원회" },
+    now: { said: "요구사항과 설계를 에이전트와의 한 작업 세션으로 압축한다. 조직의 표준은 Skill로 인코딩되어 Git에 버전 관리된다.",
+      owner: "아키텍트", artifact: "spec.md", gate: "아키텍트가 승인 (T3는 2인)", next: "승인이 plan mode를 깨운다", skill: "write-spec",
+      art: '<span class="k">skills_applied</span>: [api-design, data-classification]\n\n## Acceptance criteria\n- <span class="g">AC-1</span> EU 결제 p95 &lt; 800 ms\n- <span class="g">AC-2</span> 결제 성공률 회귀 없음\n- <span class="g">AC-3</span> 캐시 무효화 5초 이내' } },
+  { key: "Build", ko: "구현",
+    old: { said: "테스트와 코드를 손으로 쓰고, 문서는 개발이 끝난 뒤에 쓴다.", owner: "엔지니어", handoff: "티켓", decide: "없음 (코드 리뷰까지 미룸)" },
+    now: { said: "승인된 계획대로 AI가 테스트와 코드를 만든다. 조직의 지식은 기계가 읽는 CLAUDE.md와 Skills로 유지된다.",
+      owner: "테크 리드", artifact: "plan.md → diff + tests", gate: "테크 리드가 계획을 승인", next: "PR이 리뷰를 깨운다", skill: "plan-from-spec · implement-plan",
+      art: '## Steps\n- [x] EU 엣지 캐시 계층 추가\n- [x] 캐시 무효화 이벤트 구독\n- [ ] 대시보드에 p95 패널\n\n<span class="c"># tests/test_checkout.py</span>\ndef test_eu_p95():  <span class="c"># </span><span class="g">W-0142:AC-1</span>' } },
+  { key: "Test", ko: "테스트",
+    old: { said: "단계 경계마다 QA 게이트가 있고, 결함은 티켓이 되어 되돌아간다.", owner: "QA 팀", handoff: "결함 티켓", decide: "QA 승인" },
+    now: { said: "평가(eval)가 구현 내내 돈다. 수락 기준 태그가 테스트와 명세를 잇고, 테스트를 지우거나 끄면 CI가 멈춘다.",
+      owner: "자동 (사람 없음)", artifact: "eval 결과 · AC 추적", gate: "게이트는 기계가 판정", next: "통과해야 머지 가능", skill: "sdlc trace · eval-guard",
+      art: '<span class="c">$</span> python3 -m sdlc trace W-0142\nW-0142 [accepted] covered 3/3\n\n<span class="c">$</span> python3 -m sdlc eval-guard --base origin/main\neval guard: no tests or evals weakened' } },
+  { key: "Deploy", ko: "배포",
+    old: { said: "사람이 모든 줄을 리뷰하고, 거버넌스는 리뷰 주기에 따라 들쭉날쭉하게 일어난다.", owner: "릴리스 팀", handoff: "변경 요청서", decide: "주간 CAB" },
+    now: { said: "에이전트 리뷰가 여러 겹으로 돌고, 사람 리뷰는 규제·핵심 코드에만 남는다. Hooks가 에이전트가 행동하는 순간의 승인 게이트다.",
+      owner: "코드 오너 (등급별)", artifact: "PR + 리뷰 findings · release record", gate: "위험 등급만큼의 사람 승인", next: "머지가 파이프라인을 깨운다", skill: "review-pr · 4 subagents",
+      art: '<span class="c">$</span> python3 -m sdlc risk --base origin/main\nrisk tier: <span class="g">T2</span> — human reviews: 1, release: auto+canary\n  T2 db/migrations/0042_eu_cache.sql (schema-and-api)' } },
+  { key: "Maintain", ko: "운영",
+    old: { said: "사람이 대시보드를 지켜보며 버그를 찾는다. 발견은 다음 분기 백로그로 간다.", owner: "운영 팀", handoff: "버그 리포트", decide: "백로그 우선순위 회의" },
+    now: { said: "에이전트가 배포를 지켜본다. 통제 범위(control band)를 벗어나면 진단해 새 intent.md로 루프에 되돌린다.",
+      owner: "인시던트 오너", artifact: "incident record → 새 intent.md", gate: "인시던트 오너가 후속 의도를 수락", next: "수락이 다시 Plan을 깨운다", skill: "incident-to-intent",
+      art: '<span class="k">id</span>: INC-2026-004\n<span class="k">band</span>: p95-latency\n<span class="k">signal</span>: 810, 850, 905 &gt; 800 (3 samples)\n<span class="k">followup_intent</span>: work/2026/<span class="g">W-0151</span>-…/intent.md' } },
+];
+
+const FLOWS = [
+  { note: "<strong>모든 단계가 사람의 속도입니다.</strong> 코드를 짜는 일이 가장 비쌌기 때문에, 그 앞에 정렬을 강제하는 PRD·추정·보안 리뷰가 있었습니다.",
+    segs: [["Plan", 13, "human"], ["Design", 13, "human"], ["Build", 38, "human"], ["Test", 14, "human"], ["Deploy", 12, "human"], ["Maintain", 10, "human"]] },
+  { note: "<strong>빌드만 에이전트 속도로 줄었습니다.</strong> 앞뒤 단계는 그대로여서, 줄어든 시간은 리뷰 대기열과 위원회 일정에 흡수됩니다. 보안 리뷰는 사람 산출량에 맞춰 짜여 있어 큐가 쌓이거나 덜 검토된 채 나갑니다.",
+    segs: [["Plan", 13, "human"], ["Design", 13, "human"], ["Build", 5, "agent"], ["Test", 14, "human"], ["Deploy", 12, "human"], ["Maintain", 10, "human"], ["대기열로 흡수", 33, "reclaim"]] },
+  { note: "<strong>모든 단계가 아티팩트를 커밋하며 끝나고, 다음 단계는 그것을 읽고 시작합니다.</strong> 사람은 게이트에서 에이전트가 플래그한 것만 검토하고, 정책은 Hooks와 CI가 행동 시점에 집행합니다.",
+    segs: [["Plan", 5, "gated"], ["Design", 5, "gated"], ["Build", 5, "agent"], ["Test", 4, "agent"], ["Deploy", 5, "gated"], ["Maintain", 4, "agent"], ["되찾은 사이클 타임", 72, "reclaim"]] },
+];
+
+const JOURNEY = [
+  { old: ["요구사항 워크숍", "PM이 지원·영업·지표 담당을 모아 문제를 정리한다.", ["회의 3회"], "일정 조율"],
+    now: ["의도 캡처", "Claude가 SUP-8812, p95 지표, INC-2026-001을 종합해 intent.md를 제출한다.", ["intent.md"], "제품 오너 수락"],
+    term: ['<span class="m">$ python3 -m sdlc new "Checkout latency for EU users" --tier T2</span>', '<span class="h">a41c9e2</span> W-0142 intent: draft → proposed  <span class="m">(claude)</span>', '<span class="h">f07b3d1</span> W-0142 intent: proposed → <span class="y">accepted</span>  by Dana Park (product-owner)'] },
+  { old: ["PRD 작성과 설계 리뷰", "PRD v3를 쓰고 설계 리뷰 위원회를 기다린다.", ["PRD v3.docx", "설계서"], "위원회 일정"],
+    now: ["요구사항·설계 한 세션", "intent.accepted 이벤트가 write-spec을 실행해 AC-1…AC-3이 있는 spec.md를 만든다.", ["spec.md", "Skill 2개 적용"], "아키텍트 승인"],
+    term: ['<span class="m">▸ event intent.accepted → requirements-and-design (skill: write-spec)</span>', '<span class="h">9c2e114</span> W-0142 spec: draft → proposed  <span class="m">(claude)</span>', '<span class="h">1b8d0a7</span> W-0142 spec: proposed → <span class="y">accepted</span>  by Min Seo (architect)'] },
+  { old: ["티켓 분해와 구현", "설계서를 티켓 14개로 쪼개 엔지니어가 손으로 구현하고 테스트를 쓴다.", ["JIRA 14건"], "스프린트 배정"],
+    now: ["계획 승인 후 구현", "plan.md가 승인된 뒤에만 코드가 시작된다. 에이전트가 보호된 정책 파일을 고치려 하자 Hook이 막았다.", ["plan.md", "diff + tests"], "테크 리드 승인"],
+    term: ['<span class="h">3e6f5a0</span> W-0142 plan: proposed → <span class="y">accepted</span>  by Jun Lee (tech-lead)', '<span class="y">✖ hook</span> policy/risk-tiers.json is protected — proposed to a human instead', '<span class="h">c5a91f2</span> W-0142 add EU edge cache  <span class="m">(+ tests W-0142:AC-1, AC-2)</span>'] },
+  { old: ["QA 게이트", "QA 팀이 체크리스트로 수동 검증하고 결함 티켓을 되돌린다.", ["결함 티켓 4건"], "QA 큐"],
+    now: ["연속 평가와 에이전트 리뷰", "게이트와 리뷰어 서브에이전트 4개가 병렬로 돈다. 사람은 findings만 본다.", ["findings 1건", "AC 3/3"], ""],
+    term: ['<span class="m">$ python3 -m sdlc risk → T2 · human reviews: 1</span>', '✓ plan-gate  ✓ eval-guard  ✓ trace 3/3', 'perf-reviewer: 1 medium → fixed in <span class="h">7aa0c3d</span>'] },
+  { old: ["변경관리위원회", "릴리스 팀이 변경 요청서를 들고 주간 CAB를 기다린다.", ["변경 요청서"], "주간 CAB"],
+    now: ["등급만큼의 사람 리뷰", "T2라서 코드 오너 1명이 요약과 findings를 검토하고 머지한다. release record가 남는다.", ["PR #412", "release record"], "코드 오너 1명"],
+    term: ['PR #412 approved by Jun Lee (code owner) · merged', '<span class="h">release 8d21f4e</span> · T2 · canary 5% → 100%'] },
+  { old: ["운영 모니터링", "대시보드 경보를 사람이 보고 버그 리포트를 쓴다. 다음 분기 백로그로 간다.", ["버그 리포트"], "분기 계획"],
+    now: ["통제 범위를 벗어나면 루프로", "p95가 3회 연속 기준을 넘자 인시던트와 후속 의도가 생긴다. 사람이 수락하면 다시 Plan이다.", ["INC-2026-004", "W-0151 proposed"], "인시던트 오너 수락"],
+    term: ['<span class="y">⚠ band</span> checkout/p95-latency: 810, 850, 905 &gt; 800 for 3 samples', 'INC-2026-004 opened · follow-up <span class="h">W-0151</span> proposed <span class="m">(origin: maintain-loop)</span>'] },
+];
+
+const PLAYS = [
+  { id: 1, row: 1, name: "Capture intent", ko: "의도 캡처", stage: "Plan", req: [], help: [], what: "원천 소스에서 페인포인트를 종합해 intent.md로", impl: ["sdlc new · submit", "capture-intent skill"], enforce: "proposed 이상은 근거(sources) 없이는 제출 불가" },
+  { id: 2, row: 1, name: "CLAUDE.md", ko: "에이전트 지식", stage: "Build", req: [], help: [], what: "조직의 규칙을 버전 관리되는 기계 판독 문서로", impl: ["루트 CLAUDE.md", "서비스별 CLAUDE.md"], enforce: "변경은 T2 — 소유자 리뷰" },
+  { id: 3, row: 1, name: "Skills", ko: "표준의 실행화", stage: "Design", req: [], help: [2], what: "읽히지 않는 위키를 필요할 때 로드되는 Skill로", impl: [".claude/skills/ 7종"], enforce: "안내 계층. 필수 정책은 Hooks·CI에 중복 구현" },
+  { id: 4, row: 1, name: "Feedback loop", ko: "피드백 루프", stage: "Test", req: [], help: [], what: "리뷰 코멘트를 규칙과 회귀 eval로 환류", impl: ["sdlc feedback", "apply-feedback skill"], enforce: "두 번 반복된 [rule]만 CLAUDE.md로 승격" },
+  { id: 5, row: 1, name: "Hooks", ko: "행동 시점 집행", stage: "Deploy", req: [], help: [], what: "리뷰 사이클 대신 에이전트가 행동하는 순간에 정책 집행", impl: ["sdlc hook", "policy/guard.json"], enforce: "보호 경로 쓰기·승인 기록·등급 하향 차단, 이상 시 fail-closed" },
+  { id: 6, row: 1, name: "Plan mode", ko: "계획 먼저", stage: "Build", req: [], help: [], what: "읽기 전용 탐색으로 plan.md를 먼저 커밋", impl: ["plan-from-spec skill", "sdlc plan-gate"], enforce: "accepted plan.md 없는 코드 변경은 CI 실패" },
+  { id: 7, row: 2, name: "Subagents", ko: "관심사별 리뷰어", stage: "Test", req: [2], help: [4], what: "격리된 컨텍스트에서 병렬로 도는 전문 리뷰어", impl: ["spec-conformance · security · test · perf"], enforce: "읽기 전용 도구, 증거 없는 finding은 버림" },
+  { id: 8, row: 2, name: "Evals", ko: "연속 평가", stage: "Test", req: [2, 4], help: [], what: "단계 경계 QA 대신 구현 내내 도는 평가", impl: ["sdlc trace", "sdlc eval-guard"], enforce: "수락 기준이 태그되지 않으면 plan을 done으로 못 바꿈" },
+  { id: 9, row: 3, name: "Requirements & design", ko: "요구·설계 한 세션", stage: "Design", req: [1, 3], help: [], what: "요구사항과 설계를 에이전트와 한 세션으로 압축", impl: ["write-spec skill", "advance.yml"], enforce: "intent가 accepted인 뒤에만 spec 제출 가능" },
+  { id: 10, row: 3, name: "PR review", ko: "다층 PR 리뷰", stage: "Deploy", req: [8, 7], help: [3], what: "게이트 → 서브에이전트 → 등급별 사람", impl: ["review-pr skill", "ci.yml", "REVIEW.md"], enforce: "위험 등급이 요구하는 사람 승인 수를 CI가 검사" },
+  { id: 11, row: 4, name: "CI/CD", ko: "파이프라인", stage: "Deploy", req: [10, 5], help: [], what: "릴리스 위원회 대신 파이프라인 안의 정책 게이트", impl: ["ci.yml", "release.yml", "sdlc release-record"], enforce: "T3 배포는 production 환경 승인자 게이트" },
+  { id: 12, row: 5, name: "Closing the loop", ko: "루프 닫기", stage: "Maintain", req: [11, 1], help: [], what: "통제 범위 이탈을 진단해 새 intent.md로", impl: ["sdlc bands", "control-band.yml", "incident-to-intent"], enforce: "위반 → incident + proposed intent, 수락은 사람" },
+];
+
+const TIERS = [
+  { t: "T0", reviews: 0, title: "문서·작업 아티팩트", ex: "docs/** · README.md · work/**", rel: "자동 배포 · 사후 샘플 감사" },
+  { t: "T1", reviews: 0, title: "일반 기능 코드와 테스트", ex: "src/** · tests/**", rel: "자동 + canary · 사후 샘플 감사" },
+  { t: "T2", reviews: 1, title: "공개 API·스키마·의존성·에이전트 지시문", ex: "migrations/** · package.json · CLAUDE.md", rel: "코드 오너가 findings 중심 검토" },
+  { t: "T3", reviews: 2, title: "인증·결제·규제 데이터·통제 자체", ex: "auth/** · payments/** · policy/**", rel: "라인 단위 · production 환경 승인" },
+];
+
+const CONTROLS = [
+  ["요구사항 승인", "사인오프 회의", "intent.md를 accepted로 커밋", "커밋 + 승인자"],
+  ["설계 승인", "설계 리뷰 위원회", "spec PR 승인 (T3는 2인)", "PR 승인 기록"],
+  ["직무 분리", "작성자 ≠ 리뷰어", "에이전트가 작성, 사람만 승인 (에이전트 ID 거부)", "approvals + Co-Authored-By"],
+  ["보안 리뷰", "보안팀 큐", "Hooks + security-reviewer + T3 사람 리뷰", "findings + hook 로그"],
+  ["변경 관리", "주간 CAB", "정책 게이트 + T3 production 승인", "release record"],
+  ["운영 감시", "사람이 대시보드 관찰", "control band + 에이전트 진단", "incident record"],
+];
+</script>
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const press = (group, btn) => group.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* hero: cycle-time bars. One set of DOM nodes so flex-grow can animate between states. */
+  const bar = $("#flow-bar"), note = $("#flow-note");
+  const labels = ["Plan", "Design", "Build", "Test", "Deploy", "Maintain", "reclaim"];
+  const nodes = labels.map(() => { const d = document.createElement("div"); d.className = "seg-bar"; bar.appendChild(d); return d; });
+  const kindNote = { human: "사람 속도", agent: "에이전트", gated: "에이전트 + 게이트", reclaim: "" };
+  function showFlow(i) {
+    const segs = FLOWS[i].segs;
+    labels.forEach((lab, k) => {
+      const s = segs.find((x) => (lab === "reclaim" ? x[2] === "reclaim" : x[0] === lab));
+      const el = nodes[k];
+      el.style.flexGrow = s ? s[1] : 0.0001;
+      el.style.flexBasis = "0";
+      el.style.padding = s ? "" : "0";
+      el.className = "seg-bar " + (s ? s[2] : "reclaim");
+      el.innerHTML = s ? `<b>${esc(s[0])}</b><small>${kindNote[s[2]] || ""}</small>` : "";
+      el.setAttribute("aria-hidden", s ? "false" : "true");
+    });
+    note.innerHTML = FLOWS[i].note;
+  }
+  const flowSeg = $("#flow-seg");
+  flowSeg.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    press(flowSeg, b); showFlow(+b.dataset.flow); flowAuto = false;
+  });
+  let flowAuto = !reduced, flowIdx = 0;
+  showFlow(0);
+  if (flowAuto) setTimeout(function tick() {
+    if (!flowAuto) return;
+    flowIdx = (flowIdx + 1) % 3;
+    press(flowSeg, flowSeg.querySelector(`[data-flow="${flowIdx}"]`)); showFlow(flowIdx);
+    setTimeout(tick, flowIdx === 2 ? 5200 : 3400);
+  }, 2600);
+
+  /* shape: linear chain and the loop */
+  $("#linear").innerHTML = STAGES.map((s, i) => `<span class="lin-step">${s.key}</span>${i < 5 ? '<span class="lin-arrow">→</span>' : ""}`).join("");
+  const svg = $("#loop"), cx = 210, cy = 190, R = 140, NS = "http://www.w3.org/2000/svg";
+  const pos = STAGES.map((_, i) => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / 6; return [cx + R * Math.cos(a), cy + R * Math.sin(a), a]; });
+  let g = `<circle class="ring" cx="${cx}" cy="${cy}" r="${R}"/>`;
+  pos.forEach((p, i) => { // chevrons between nodes show the direction of travel
+    const a = p[2] + Math.PI / 6, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a), deg = (a * 180) / Math.PI + 90;
+    g += `<path d="M -5 -4 L 2 0 L -5 4" fill="none" stroke="var(--accent)" stroke-width="2" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${deg.toFixed(1)})"/>`;
+  });
+  g += `<path class="arc" id="loop-arc" d=""/>`;
+  g += `<circle class="core" cx="${cx}" cy="${cy}" r="54"/><text x="${cx}" y="${cy - 4}" text-anchor="middle" font-weight="700" font-size="17">Claude</text><text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="11" style="fill:var(--muted)">artifacts · hooks</text>`;
+  pos.forEach((p, i) => {
+    const gated = STAGES[i].now.owner.indexOf("자동") < 0;
+    g += `<g class="node" data-i="${i}" tabindex="0" role="button" aria-label="${STAGES[i].key} 단계 보기"><rect x="${(p[0] - 48).toFixed(1)}" y="${(p[1] - 19).toFixed(1)}" width="96" height="38" rx="9"/><text x="${p[0].toFixed(1)}" y="${(p[1] + 5).toFixed(1)}" text-anchor="middle" font-weight="600" font-size="14">${STAGES[i].key}</text>${gated ? `<circle class="gate-dot" cx="${(p[0] + 44).toFixed(1)}" cy="${(p[1] - 15).toFixed(1)}" r="5"/>` : ""}</g>`;
+  });
+  svg.innerHTML = g;
+  function arcPath(i) {
+    const a0 = pos[i][2] + 0.28, a1 = pos[i][2] + (2 * Math.PI) / 6 - 0.28;
+    const p = (a) => `${(cx + R * Math.cos(a)).toFixed(1)} ${(cy + R * Math.sin(a)).toFixed(1)}`;
+    return `M ${p(a0)} A ${R} ${R} 0 0 1 ${p(a1)}`;
+  }
+  function showNode(i) {
+    svg.querySelectorAll(".node").forEach((n) => n.classList.toggle("on", +n.dataset.i === i));
+    $("#loop-arc").setAttribute("d", arcPath(i));
+    const s = STAGES[i].now, nx = STAGES[(i + 1) % 6].key;
+    $("#node-detail").innerHTML = `<h3>${STAGES[i].key} · ${STAGES[i].ko}</h3>
+      <div class="row"><span class="chip native">${esc(s.artifact)}</span><span class="chip gate"><span class="dot"></span>${esc(s.gate)}</span></div>
+      <p style="color:var(--ink-2)">${esc(s.said)}</p>
+      <p class="fine">다음: ${esc(s.next)} → <b>${nx}</b></p>`;
+  }
+  svg.addEventListener("click", (e) => { const n = e.target.closest(".node"); if (n) showNode(+n.dataset.i); });
+  svg.addEventListener("keydown", (e) => { const n = e.target.closest(".node"); if (n && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); showNode(+n.dataset.i); } });
+  showNode(0);
+
+  /* stage compare */
+  const stageSeg = $("#stage-seg");
+  stageSeg.innerHTML = STAGES.map((s, i) => `<button type="button" data-i="${i}" aria-pressed="${i === 0}">${s.key}</button>`).join("");
+  function showStage(i) {
+    const s = STAGES[i];
+    $("#compare").innerHTML = `
+      <div class="old"><span class="chip legacy"><span class="dot"></span>전통 SDLC</span><h3>${s.key} · ${s.ko}</h3><p class="said">${esc(s.old.said)}</p>
+        <dl class="kv"><dt>누가</dt><dd>${esc(s.old.owner)}</dd><dt>넘기는 것</dt><dd>${esc(s.old.handoff)}</dd><dt>결정 방식</dt><dd>${esc(s.old.decide)}</dd></dl></div>
+      <div><span class="chip native"><span class="dot"></span>AI-native SDLC</span><h3>${s.key} · ${s.ko}</h3><p class="said">${esc(s.now.said)}</p>
+        <dl class="kv"><dt>게이트</dt><dd>${esc(s.now.gate)} <span class="fine">· ${esc(s.now.owner)}</span></dd><dt>커밋되는 것</dt><dd><code>${esc(s.now.artifact)}</code></dd><dt>다음 단계</dt><dd>${esc(s.now.next)}</dd><dt>도구</dt><dd><code>${esc(s.now.skill)}</code></dd></dl>
+        <div class="art">${s.now.art}</div></div>`;
+  }
+  stageSeg.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; press(stageSeg, b); showStage(+b.dataset.i); });
+  showStage(0);
+
+  /* journey */
+  const laneOld = $("#lane-old"), laneNew = $("#lane-new"), term = $("#term");
+  const item = (x, i, kind) => `<li><span class="n">${i + 1}</span><div><div class="t">${esc(x[0])}</div><div class="d">${esc(x[1])}</div>
+    <div class="meta">${x[2].map((m) => `<span class="chip ${kind}">${esc(m)}</span>`).join("")}${x[3] ? (kind === "legacy" ? `<span class="chip wait">대기 · ${esc(x[3])}</span>` : `<span class="chip gate"><span class="dot"></span>${esc(x[3])}</span>`) : ""}</div></div></li>`;
+  laneOld.innerHTML = JOURNEY.map((j, i) => item(j.old, i, "legacy")).join("");
+  laneNew.innerHTML = JOURNEY.map((j, i) => item(j.now, i, "native")).join("");
+  let step = 0, timer = null;
+  function showStep(k) {
+    step = Math.max(0, Math.min(JOURNEY.length - 1, k));
+    [laneOld, laneNew].forEach((l) => l.querySelectorAll("li").forEach((li, i) => { li.className = i < step ? "past" : i === step ? "now" : ""; }));
+    term.innerHTML = JOURNEY.slice(0, step + 1).flatMap((j) => j.term).map((l) => `<div>${l}</div>`).join("");
+    term.scrollTop = term.scrollHeight;
+    $("#j-label").textContent = `${step + 1} / ${JOURNEY.length} · ${STAGES[step].key}`;
+    $("#j-bar").style.width = `${((step + 1) / JOURNEY.length) * 100}%`;
+  }
+  function stop() { clearInterval(timer); timer = null; $("#j-play").textContent = "▶ 재생"; }
+  $("#j-prev").onclick = () => { stop(); showStep(step - 1); };
+  $("#j-next").onclick = () => { stop(); showStep(step + 1); };
+  $("#j-play").onclick = () => {
+    if (timer) return stop();
+    if (step === JOURNEY.length - 1) showStep(0);
+    $("#j-play").textContent = "❚❚ 일시정지";
+    timer = setInterval(() => { if (step === JOURNEY.length - 1) return stop(); showStep(step + 1); }, 2600);
+  };
+  showStep(0);
+  const gatesNew = JOURNEY.filter((j) => j.now[3]).length;
+  const waitsOld = JOURNEY.filter((j) => j.old[3]).length;
+  const commits = JOURNEY.flatMap((j) => j.term).filter((l) => /class="h">[0-9a-f]{7}</.test(l)).length;
+  $("#tally").innerHTML = `
+    <div><div class="lab">사람이 결정하는 지점</div><div class="val"><b class="o">${waitsOld}</b><span>→</span><b class="x">${gatesNew}</b></div><div class="fine">회의·위원회 대기 → 게이트</div></div>
+    <div><div class="lab">단계를 넘기는 매개</div><div class="val"><b class="o" style="font-size:18px">문서·회의</b><span>→</span><b class="x" style="font-size:18px">커밋 ${commits}개</b></div><div class="fine">다음 단계는 커밋을 읽고 시작</div></div>
+    <div><div class="lab">감사 추적</div><div class="val"><b class="o" style="font-size:18px">흩어진 기록</b><span>→</span><b class="x" style="font-size:18px">커밋 체인 하나</b></div><div class="fine">누가 요청했고, 무엇이 만들어졌고, 누가 승인했나</div></div>`;
+
+  /* plays */
+  const grid = $("#play-grid"), wrap = $("#plays-wrap");
+  const rowName = { 1: "선행 없음", 2: "2단계", 3: "3단계", 4: "4단계", 5: "5단계" };
+  grid.innerHTML = [1, 2, 3, 4, 5].map((r) => `<div class="tier-row"><span class="lvl">${rowName[r]}</span><div class="cells">${PLAYS.filter((p) => p.row === r).map((p) => `<button type="button" class="play" data-id="${p.id}" aria-pressed="false"><small>${String(p.id).padStart(2, "0")}</small>${esc(p.name)}</button>`).join("")}</div></div>`).join("");
+  const byId = Object.fromEntries(PLAYS.map((p) => [p.id, p]));
+  function showPlay(id) {
+    const p = byId[id], next = PLAYS.filter((q) => q.req.includes(id) || q.help.includes(id)).map((q) => q.id);
+    wrap.classList.add("focus");
+    grid.querySelectorAll(".play").forEach((b) => {
+      const i = +b.dataset.id;
+      b.className = "play" + (i === id ? " sel" : p.req.includes(i) ? " req" : p.help.includes(i) ? " help" : next.includes(i) ? " next" : "");
+      b.setAttribute("aria-pressed", String(i === id));
+    });
+    const names = (ids) => ids.length ? ids.map((i) => byId[i].name).join(", ") : "없음 — 오늘 시작할 수 있습니다";
+    $("#play-detail").innerHTML = `<span class="stage">${p.stage} · Play ${String(p.id).padStart(2, "0")}</span>
+      <h3 style="font-size:22px">${esc(p.name)} <span style="color:var(--muted);font-weight:500;font-size:16px">${esc(p.ko)}</span></h3>
+      <p style="color:var(--ink-2)">${esc(p.what)}</p>
+      <dl class="kv"><dt>필수 선행</dt><dd>${esc(names(p.req))}</dd>${p.help.length ? `<dt>도움이 됨</dt><dd>${esc(names(p.help))}</dd>` : ""}<dt>이어지는 것</dt><dd>${next.length ? esc(next.map((i) => byId[i].name).join(", ")) : "루프의 끝 — 다시 Plan으로"}</dd></dl>
+      <div><div class="fine" style="margin-bottom:6px">이 저장소의 구현</div><ul>${p.impl.map((x) => `<li><code>${esc(x)}</code></li>`).join("")}</ul></div>
+      <p style="font-size:13.5px"><span class="chip gate"><span class="dot"></span>집행</span> ${esc(p.enforce)}</p>`;
+  }
+  grid.addEventListener("click", (e) => { const b = e.target.closest(".play"); if (b) showPlay(+b.dataset.id); });
+  showPlay(10);
+
+  /* governance */
+  $("#tier-cards").innerHTML = TIERS.map((t, i) => `<div class="tcard"><div class="lv"><b>${t.t}</b><span class="chip ${t.reviews ? "gate" : ""}">사람 ${t.reviews}명</span></div>
+    <div class="meter" aria-hidden="true">${[0, 1, 2, 3].map((k) => `<i class="${k <= i ? "on" : ""}"></i>`).join("")}</div>
+    <p>${esc(t.title)}</p><div class="ex">${esc(t.ex)}</div><div class="fine">${esc(t.rel)}</div></div>`).join("");
+  $("#control-rows").innerHTML = CONTROLS.map((r) => `<tr><td><b>${esc(r[0])}</b></td><td class="o">${esc(r[1])}</td><td>${esc(r[2])}</td><td class="mono">${esc(r[3])}</td></tr>`).join("");
+
+  /* copy CLI */
+  $("#copy-cli").onclick = async (e) => {
+    try { await navigator.clipboard.writeText($("#cli-text").innerText); e.target.textContent = "복사됨"; }
+    catch { e.target.textContent = "직접 선택해 복사하세요"; }
+    setTimeout(() => (e.target.textContent = "복사"), 1800);
+  };
+})();
+</script>
