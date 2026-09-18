@@ -19,7 +19,7 @@
 
       <div class="section"><h2>${esc(c.stagesH)}</h2>
         <ol class="stage-list">${c.stages.map(([s, o, n, diff], i) => `<li style="--c:var(--st-${["plan", "design", "build", "test", "deploy", "maintain"][i]})">
-          <span class="st-name"><span class="st-no">${i + 1}</span>${esc(s)}</span>
+          <span class="st-name"><span class="st-no" title="${i + 1}">${ICONS.stage(["plan", "design", "build", "test", "deploy", "maintain"][i])}</span>${esc(s)}</span>
           <span class="st-old">${esc(o)}</span>
           <span class="st-arrow" aria-hidden="true">→</span>
           <span class="st-new">${esc(n)}</span>

@@ -118,6 +118,7 @@ const App = (() => {
   window.addEventListener("langchange", render);
   window.addEventListener("DOMContentLoaded", () => {
     I18N.apply();
+    $("#brand-mark").innerHTML = ICONS.mark(24);
     wireNewWork();
     if (!location.hash) history.replaceState(null, "", location.search + "#/intro"); // first stop: what is different, and why
     $("#refresh").onclick = () => { loadRepo(); render(); };

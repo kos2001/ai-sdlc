@@ -35,11 +35,11 @@
     if (!a) {
       const prev = w.chain[KINDS[i - 1]];
       const ready = prev && ["accepted", "done"].includes(prev.status);
-      return `<div class="link missing" style="--c:var(--st-${HUE[kind]})"><h3><span>${kind}.md</span></h3>
+      return `<div class="link missing" style="--c:var(--st-${HUE[kind]})"><h3><span>${ICONS.stage(kind)}${kind}.md</span></h3>
         <p style="margin:0;font-size:13px">${esc(ready ? t("wd.ready") : t("wd.after", { prev: KINDS[i - 1] }))}</p>
         ${ready ? `<button class="btn small primary" type="button" data-act="stage" data-kind="${kind}">${esc(t("wd.makeDraft", { kind }))}</button>` : ""}</div>`;
     }
-    return `<div class="link" style="--c:var(--st-${HUE[kind]})"><h3><span>${kind}.md</span>${statusChip(a.status)}</h3>
+    return `<div class="link" style="--c:var(--st-${HUE[kind]})"><h3><span>${ICONS.stage(kind)}${kind}.md</span>${statusChip(a.status)}</h3>
       <div class="fine">${esc(t("wd.approvals", { have: a.approvals.length, need: a.needed }))}${a.tier ? ` · ${esc(a.tier)}` : ""}</div>
       ${a.approvals.length ? `<ul>${a.approvals.map((p) => `<li>${esc(p.by)} <span class="muted">· ${esc(p.role)} · ${esc(p.at)}</span></li>`).join("")}</ul>` : ""}
       ${a.issues.length ? `<ul style="color:var(--bad)">${a.issues.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
