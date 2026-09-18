@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 상태 | Draft v0.1 |
+| 문서 상태 | Draft v0.2 — 참조 구현 반영 (§14) |
 | 작성일 | 2026-09-18 |
 | 범위 | Plan → Design → Build → Test → Deploy → Maintain 전 단계 |
 | 기반 | Anthropic Applied AI "AI-native SDLC" 플레이북 (12 plays) |
@@ -149,7 +149,8 @@ flowchart TB
 - 위치: `work/<YYYY>/<work-id>/` (예: `work/2026/W-0142-checkout-latency/`)
 - 모든 `.md` 아티팩트는 YAML frontmatter를 가진다.
 - 상태 변경은 **반드시 커밋**으로 이루어진다. 승인은 frontmatter의 `approvals` 필드 + 해당 커밋의 서명자(또는 PR 승인)로 이중 기록한다.
-- 에이전트가 생성한 커밋은 `Co-Authored-By` 트레일러와 `Agent-Run: <run-id>` 트레일러를 포함한다.
+- 에이전트가 생성한 커밋은 `Co-Authored-By` 트레일러를 포함한다. release record가 이를 읽어 에이전트 공동 작성자를 기록한다.
+- frontmatter는 YAML의 부분집합(스칼라, 인라인 리스트, 스칼라/평면 매핑의 블록 리스트)만 허용한다. 범위를 벗어나면 추측하지 않고 오류로 처리한다.
 
 ### 5.2 상태 머신
 
@@ -246,38 +247,38 @@ approvals: []
 
 ## 6. 리포지토리 레이아웃
 
+구현(§14)이 실제로 사용하는 레이아웃이다.
+
 ```
 .
-├── CLAUDE.md                     # 전사/레포 공통 규칙 (빌드, 테스트, 금지사항)
-├── services/<svc>/CLAUDE.md      # 서비스별 로컬 규칙 (계층형)
+├── CLAUDE.md                     # 에이전트 운영 규칙 (명령, 아티팩트 체인, 게이트, 보호 경로)
+├── services/<svc>/CLAUDE.md      # 서비스별 로컬 규칙 (계층형, 도입 조직이 추가)
+├── REVIEW.md                     # 리뷰 계층·심각도·증거 규칙
 ├── .claude/
-│   ├── settings.json             # hooks, permissions (팀 공유)
-│   ├── skills/
-│   │   ├── capture-intent/SKILL.md
-│   │   ├── write-spec/SKILL.md
-│   │   ├── api-design-standard/SKILL.md
-│   │   ├── data-classification/SKILL.md
-│   │   └── incident-to-intent/SKILL.md
-│   └── agents/
-│       ├── security-reviewer.md
-│       ├── test-reviewer.md
-│       ├── spec-conformance-reviewer.md
-│       └── perf-reviewer.md
-├── work/<YYYY>/<work-id>/{intent,spec,plan}.md
-├── incidents/<YYYY>/INC-*.md
-├── evals/
-│   ├── suites/<domain>/*.yaml    # AC → eval 케이스
-│   └── feedback/                 # 사람 피드백에서 추출한 회귀 케이스
+│   ├── settings.json             # hooks → `python3 -m sdlc hook <event>`, permissions deny
+│   ├── skills/                   # capture-intent, write-spec, plan-from-spec, implement-plan,
+│   │                             # review-pr, apply-feedback, incident-to-intent
+│   └── agents/                   # spec-conformance / security / test / perf reviewer (읽기 전용)
+├── sdlc/                         # 결정적 도구 (Python 표준 라이브러리만)
+├── templates/                    # intent / spec / plan / incident 템플릿
+├── work/<YYYY>/<W-NNNN>-<slug>/{intent,spec,plan}.md
+├── incidents/<YYYY>/INC-<YYYY>-<NNN>.md
+├── bands/<service>.json          # control band 정의 (Maintain 입력)
+├── tests/ · evals/               # AC 태그 `W-NNNN:AC-n`로 spec과 연결
+├── evals/feedback/inbox.md       # Play 4 주간 수집 결과
 ├── policy/
-│   ├── risk-tiers.yaml           # 경로·데이터 분류 → 위험 등급
-│   ├── codeowners-tiered         # 등급별 필수 리뷰어
-│   └── hooks/                    # hook 스크립트 (pre-tool, post-tool, stop)
-└── .github/workflows/
-    ├── on-intent-accepted.yml
-    ├── on-spec-approved.yml
-    ├── pr-agentic-review.yml
-    ├── deploy.yml
-    └── on-control-band-breach.yml
+│   ├── guard.json                # 보호 경로, 차단 명령 (Hooks가 집행)
+│   └── risk-tiers.json           # 경로 규칙 → 위험 등급, 등급별 사람 리뷰 수·릴리스 정책
+└── .github/
+    ├── CODEOWNERS                # 게이트별 승인자, 통제 파일 소유자
+    ├── PULL_REQUEST_TEMPLATE.md
+    └── workflows/
+        ├── ci.yml                # 결정적 게이트 + 등급별 사람 승인 수 검사
+        ├── pr-review.yml         # review-pr skill (서브에이전트 리뷰)
+        ├── advance.yml           # 아티팩트 이벤트 → 다음 play
+        ├── release.yml           # release record, T3는 production 환경 승인
+        ├── control-band.yml      # 지표 dispatch → incident + intent + 진단 PR
+        └── feedback.yml          # 주간 리뷰 피드백 수집 → apply-feedback
 ```
 
 ---
@@ -375,7 +376,7 @@ flowchart TB
 
 - **변화**: 리뷰 사이클에서 사후 발견 → 에이전트 행동 시점에 결정적(deterministic)으로 집행.
 - **선행조건**: 없음.
-- **구현 단계** (`.claude/settings.json` + `policy/hooks/`)
+- **구현 단계** (`.claude/settings.json` → `sdlc/hooks.py`, 규칙은 `policy/guard.json`)
 
   | Hook 이벤트 | 용도 | 예시 정책 |
   |---|---|---|
@@ -422,7 +423,7 @@ flowchart TB
 - **변화**: 단계 경계의 QA 게이트 → 구현 중 지속 실행되는 평가.
 - **선행조건**: CLAUDE.md, Feedback loop.
 - **구현 단계**
-  1. spec의 각 Acceptance criterion을 `evals/suites/`의 케이스로 변환(Design 단계 산출물의 일부).
+  1. spec의 각 Acceptance criterion(`AC-n`)을 검증하는 테스트/eval에 `W-NNNN:AC-n` 태그를 단다. `sdlc trace`가 커버리지를 계산하고, `plan.md`는 모든 AC가 태깅되기 전까지 `done`이 될 수 없다.
   2. 세 계층: (a) 결정적 테스트(unit/integration), (b) 행동 eval(LLM 기능이 있다면 채점 기준 기반), (c) 에이전트 품질 eval(에이전트가 같은 작업을 반복 수행했을 때 규칙 준수율 — CLAUDE.md/Skill 변경의 회귀 검사).
   3. `PostToolUse`/`Stop` hook에서 관련 suite 부분 실행, CI에서 전체 실행.
   4. Feedback loop에서 유입된 회귀 케이스는 영구 보존.
@@ -434,7 +435,7 @@ flowchart TB
 - **변화**: 분석가가 spec 작성 → 디자이너가 해석, 의 다단계 → 에이전트와의 **단일 작업 세션**에서 요구사항과 설계를 압축.
 - **선행조건**: Capture intent, Skills.
 - **구현 단계**
-  1. 트리거: `intent.md`가 `accepted`로 커밋 → `on-intent-accepted` 워크플로가 headless로 `write-spec` Skill 실행 → `spec.md` 초안 PR 생성.
+  1. 트리거: `intent.md`가 `accepted`로 커밋 → `advance.yml`이 `sdlc events`로 이벤트를 도출해 `write-spec` Skill 실행 → `spec.md` 초안 PR 생성.
   2. 아키텍트·PO가 PR에서 대화형 세션으로 보완(동일 세션에서 요구사항·설계·AC·위협 모델 확정).
   3. `skills_applied` 필드에 적용 표준 기록 → 어떤 표준이 적용되었는지 감사 가능.
 - **거버넌스**: spec PR 승인 = 설계 승인. T3 이상은 보안 아키텍트 추가 승인.
@@ -445,13 +446,13 @@ flowchart TB
 - **변화**: 사람이 모든 라인 리뷰 → **다층 에이전트 리뷰** + 위험 등급에 따른 사람 리뷰.
 - **선행조건**: Evals, Subagents (Skills는 도움).
 - **구현 단계**
-  1. PR 생성 → `pr-agentic-review` 워크플로: evals 실행 → 서브에이전트 병렬 리뷰 → findings 게시 → 위험 등급 산정(§8.1).
+  1. PR 생성 → `pr-review.yml` + `ci.yml`: evals 실행 → 서브에이전트 병렬 리뷰 → findings 게시 → 위험 등급 산정(§8.1).
   2. 에이전트가 findings를 반영한 수정 커밋을 푸시(최대 N회), 해결 여부를 PR에 기록.
   3. 등급별 사람 리뷰 라우팅:
      - T0/T1: 에이전트 리뷰 + 자동 게이트 통과 시 머지 가능(샘플링 사후 감사).
      - T2: Code owner 1인이 **findings와 요약** 중심으로 리뷰.
      - T3: Code owner + 도메인(보안/규제) 리뷰어, 라인 단위 리뷰.
-- **거버넌스**: 등급 산정 로직(`policy/risk-tiers.yaml`)은 보안·컴플라이언스 소유. 에이전트는 등급을 **낮출 수 없다**(올리는 것만 가능).
+- **거버넌스**: 등급 산정 로직(`policy/risk-tiers.json`)은 보안·컴플라이언스 소유. 에이전트는 등급을 **낮출 수 없다**(올리는 것만 가능).
 - **측정**: PR 대기 시간(등급별), 사람 리뷰 시간/PR, 머지 후 결함률(등급별), 샘플링 감사 적발률.
 
 ### Play 11. CI/CD — `Deploy`
@@ -471,7 +472,7 @@ flowchart TB
 - **변화**: 사람이 프로덕션 버그를 감시 → 에이전트가 control band를 감시하고, 위반 시 진단해 새 `intent.md`로 루프에 되돌림.
 - **선행조건**: CI/CD, Capture intent.
 - **구현 단계**
-  1. control band 위반 이벤트 → `on-control-band-breach` 워크플로.
+  1. control band 위반 이벤트 → `control-band.yml` (repository_dispatch) → `sdlc bands open`.
   2. headless Claude(읽기 전용 관측 권한)가 최근 release record·diff·로그·지표를 상관 분석 → incident record 작성(가설과 근거 분리).
   3. 즉시 조치 필요 시: 사전 승인된 런북 범위 내 조치(예: flag off, 롤백)만 자동 수행, 그 외는 온콜 호출.
   4. `incident-to-intent` Skill로 후속 `intent.md`(`origin: maintain-loop`, `status: proposed`) 생성 → 인시던트 오너가 수락하면 Play 9로 진입.
@@ -484,7 +485,7 @@ flowchart TB
 
 ### 8.1 위험 등급 (Risk tier)
 
-`policy/risk-tiers.yaml`에서 경로·데이터 분류·변경 유형으로 결정적으로 산정한다. 여러 조건 중 **가장 높은 등급**을 적용한다.
+`policy/risk-tiers.json`에서 경로·데이터 분류·변경 유형으로 결정적으로 산정한다. 여러 조건 중 **가장 높은 등급**을 적용한다.
 
 | 등급 | 예시 | 에이전트 리뷰 | 사람 리뷰 | 릴리스 |
 |---|---|---|---|---|
@@ -494,7 +495,7 @@ flowchart TB
 | T3 | 인증/인가, 결제, PII/규제 데이터, 암호화, 인프라 권한 | 필수 | Code owner + 도메인 전문가, 라인 단위 | 사람 승인 |
 
 ```yaml
-# policy/risk-tiers.yaml (예시)
+# policy/risk-tiers.json 의 규칙을 YAML로 요약한 예시
 rules:
   - match: { paths: ["services/auth/**", "services/payments/**"] }
     tier: T3
@@ -597,3 +598,36 @@ default: T1
 3. 규제 감사에서 "에이전트 작성 + 사람 승인"이 직무 분리 요건을 충족하는지 컴플라이언스 확인 필요.
 4. control band의 정의 주체: `plan.md` 작성 시 에이전트 제안 + SRE 승인으로 충분한가?
 5. 파일럿 팀과 파일럿 서비스 선정 기준(위험 등급 분포가 T0~T2 중심인 서비스 권장).
+
+---
+
+## 14. 구현 현황 (참조 구현)
+
+공식 Anthropic 저장소는 없어서 이 저장소에 직접 구현했다. `python3 -m sdlc`(Python 3.11+, 표준 라이브러리만), Claude Code 설정, GitHub Actions로 구성된다. `make check` = 단위 테스트 47개 + 아티팩트 검증.
+
+### 14.1 플레이 → 구현 매핑
+
+| Play | 구현 | 집행 방식 |
+|---|---|---|
+| 1 Capture intent | `sdlc new/submit`, `capture-intent` skill, `templates/intent.md` | `proposed` 이상은 `sources`·Problem·Desired outcome 필수 |
+| 2 CLAUDE.md | 루트 `CLAUDE.md` | 규칙 변경은 T2 (CODEOWNERS) |
+| 3 Skills | `.claude/skills/*` 7종 | 안내 계층, 필수 정책은 Hooks/CI에 중복 |
+| 4 Feedback loop | `sdlc feedback`, `apply-feedback` skill, `feedback.yml` | 2회 반복된 `[rule]`만 CLAUDE.md 후보로 승격 |
+| 5 Hooks | `sdlc/hooks.py`, `policy/guard.json`, `.claude/settings.json` | 위험 명령, 보호 경로 쓰기, 에이전트의 승인 기록·게이트 상태 변경·등급 하향 차단, 편집 직후와 종료 전 아티팩트 검증, 이상 시 fail-closed |
+| 6 Plan mode | `plan-from-spec` skill, `sdlc plan-gate` | T0가 아닌 diff는 커밋된 accepted `plan.md`가 있는 W-NNNN 필요 |
+| 7 Subagents | `.claude/agents/*-reviewer.md` 4종 | 읽기 전용 도구, 증거가 있는 JSON만 출력 |
+| 8 Evals | `sdlc trace`, `sdlc eval-guard` | AC 태그 커버리지 없으면 plan `done` 불가, 테스트 삭제·skip·태그 제거는 라벨 승인 필요 |
+| 9 Requirements & design | `write-spec` skill, `sdlc stage`, `advance.yml` | spec은 intent accepted 후에만 제출, 등급 하향 금지 |
+| 10 PR review | `review-pr` skill, `pr-review.yml`, `ci.yml`, `REVIEW.md` | `sdlc risk` 등급별 사람 승인 수(봇 제외)를 CI가 검사 |
+| 11 CI/CD | `ci.yml`, `release.yml`, `sdlc release-record` | T3 배포는 `production` environment 승인자 게이트 |
+| 12 Closing the loop | `sdlc bands`, `incident-to-intent` skill, `control-band.yml` | 연속 위반 시 incident + `proposed` intent (중복 방지), 수락은 사람 |
+
+게이트 공통 규칙은 `sdlc/artifacts.py`에 있다. 승인은 사람만 한다(에이전트·봇 ID 거부). T3 spec/plan은 승인 2건이 필요하다. 승인 기록은 추가만 가능하고, 불법 상태 전이와 아티팩트 삭제는 `sdlc transitions`가 PR에서 차단한다.
+
+### 14.2 알려진 한계
+
+- **Hook의 셸 쓰기 탐지가 과민함**: 현재 버전은 명령에 보호 경로 문자열과 쓰기 연산자(`>`, `rm` 등)가 함께 있으면 차단한다. 그래서 `grep ... sdlc/hooks.py 2>&1`, 커밋 메시지에 경로를 언급하는 heredoc 같은 무해한 명령도 막힌다. 실제 쓰기 대상만 판정하는 수정안(테스트 포함, 48개 통과)은 `docs/patches/0001-hook-target-aware-shell-writes.patch`에 있다. `sdlc/hooks.py`와 `policy/`는 보호 경로라서 에이전트가 적용할 수 없고, 사람이 `git apply`로 적용해야 한다.
+- 셸 쓰기 탐지는 휴리스틱이다. `cd dir && … > ../policy/x`처럼 cwd에 의존하는 상대 경로와 `python -c` 내부 쓰기는 잡지 못한다. 최종 방어선은 CODEOWNERS + `ci.yml`(통제 파일 변경은 T3, 사람 2인 승인)이다.
+- `approvals`는 frontmatter에 기록되므로 사람이 손으로 위조할 수 있다. CODEOWNERS 필수 리뷰와 PR 승인 기록(이중 기록, §5.1)으로 보완한다. 에이전트 ID 판정은 이름 패턴 기반이다.
+- `ci.yml`은 승인 **수**만 센다. 승인자가 해당 경로의 코드 오너인지는 브랜치 보호의 "Require review from Code Owners"로 강제해야 한다.
+- GitHub Actions 워크플로는 YAML 파싱, `run` 스크립트 `bash -n`, `claude-code-action@v1` 입력 이름(action.yml 대조)까지만 검증했다. 실제 GitHub 저장소에서는 아직 실행해 보지 않았다. `ANTHROPIC_API_KEY` secret, `DEPLOY_COMMAND` 변수, `production` environment 승인자, CODEOWNERS 팀 이름을 설정해야 동작한다.

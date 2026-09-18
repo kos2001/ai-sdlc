@@ -1,0 +1,129 @@
+diff --git a/policy/guard.json b/policy/guard.json
+index 72cf88f..6286405 100644
+--- a/policy/guard.json
++++ b/policy/guard.json
+@@ -21,6 +21,5 @@
+     {"pattern": "\\bgh\\s+pr\\s+merge\\b", "reason": "merging is a human gate"},
+     {"pattern": "\\bgh\\s+release\\s+create\\b", "reason": "releasing is a human gate"}
+   ],
+-  "shell_write_pattern": "(>|\\btee\\b|\\bsed\\s+-i|\\bperl\\s+-[a-z]*i|\\bmv\\b|\\bcp\\b|\\brm\\b|\\bchmod\\b|\\btruncate\\b|\\bln\\b|git\\s+(checkout|restore)\\b)",
+   "gate_statuses": ["accepted", "done", "rejected"]
+ }
+diff --git a/sdlc/hooks.py b/sdlc/hooks.py
+index 3da2332..e47713f 100644
+--- a/sdlc/hooks.py
++++ b/sdlc/hooks.py
+@@ -9,6 +9,7 @@ from __future__ import annotations
+ 
+ import json
+ import re
++import shlex
+ import sys
+ from pathlib import Path
+ 
+@@ -28,8 +29,54 @@ def _guard(root: Path) -> dict:
+     return policy.load(root, "guard.json")
+ 
+ 
+-def _literal_prefix(pattern: str) -> str:
+-    return re.split(r"[*?]", pattern, maxsplit=1)[0]
++# Commands that modify their path arguments: every non-option argument is a write target.
++_WRITES_ALL_ARGS = {"rm", "rmdir", "mv", "chmod", "chown", "truncate", "touch", "tee", "unlink", "shred"}
++# Commands where only the last argument (the destination) is written.
++_WRITES_LAST_ARG = {"cp", "ln", "install", "rsync"}
++_HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1[^\n]*\n.*?\n\s*\2\s*(?:\n|$)", re.DOTALL)
++_REDIRECT = re.compile(r"(?<![0-9&])>>?\s*(?!&)([^\s;&|<>]+)|[0-9]>>?\s*(?!&)([^\s;&|<>]+)")
++
++
++def _words(segment: str) -> list[str]:
++    try:
++        return shlex.split(segment, posix=True)
++    except ValueError:
++        return segment.split()
++
++
++def write_targets(command: str) -> list[str]:
++    """Paths a shell command would write, by redirect or by a known writing command.
++    Heredoc bodies are data (commit messages, file contents), not commands."""
++    heredoc_free = _HEREDOC.sub("\n", command)
++    targets = [a or b for a, b in _REDIRECT.findall(heredoc_free)]
++    for segment in re.split(r"\n|;|&&|\|\||\|", _REDIRECT.sub(" ", heredoc_free)):
++        words = _words(segment)
++        while words and (re.match(r"^\w+=", words[0]) or words[0] in ("sudo", "command", "env", "xargs")):
++            words = words[1:]
++        if not words:
++            continue
++        cmd, args = Path(words[0]).name, [w for w in words[1:] if not w.startswith("-")]
++        if cmd in _WRITES_ALL_ARGS:
++            targets += args
++        elif cmd in _WRITES_LAST_ARG and args:
++            targets.append(args[-1])
++        elif cmd in ("sed", "perl") and any(re.match(r"^-[a-zA-Z]*i", w) for w in words[1:]):
++            targets += args[1:]  # first non-option arg is the script
++        elif cmd == "git" and args[:1] in (["checkout"], ["restore"], ["rm"], ["mv"]) and "--" in words:
++            targets += words[words.index("--") + 1:]
++        elif cmd == "git" and args[:1] in (["rm"], ["mv"], ["restore"]):
++            targets += args[1:]
++    return [t for t in targets if t and t != "/dev/null"]
++
++
++def _protected_hit(root: Path, target: str, protected: list[str]) -> str | None:
++    rel = policy.relative(root, target)
++    if rel is None:
++        return None
++    if rel in ("", "."):
++        return "repository root"
++    # A directory argument (e.g. `rm -r policy`) covers everything below it.
++    return policy.matches(rel, protected) or policy.matches(rel.rstrip("/") + "/x", protected)
+ 
+ 
+ def check_command(root: Path, command: str) -> None:
+@@ -37,11 +84,10 @@ def check_command(root: Path, command: str) -> None:
+     for rule in guard["blocked_commands"]:
+         if re.search(rule["pattern"], command):
+             raise Verdict(f"blocked command ({rule['reason']}): {command.strip()[:200]}")
+-    if re.search(guard["shell_write_pattern"], command):
+-        for pattern in guard["protected_paths"]:
+-            prefix = _literal_prefix(pattern)
+-            if prefix and prefix in command:
+-                raise Verdict(f"shell write touching protected path '{pattern}'; protected paths are changed by humans")
++    for target in write_targets(command):
++        hit = _protected_hit(root, target, guard["protected_paths"])
++        if hit:
++            raise Verdict(f"shell write to '{target}' (protected by '{hit}'); protected paths are changed by humans")
+ 
+ 
+ def _prospective_text(path: Path, tool: str, tool_input: dict) -> str | None:
+diff --git a/tests/test_hooks.py b/tests/test_hooks.py
+index 7d2880d..c003c71 100644
+--- a/tests/test_hooks.py
++++ b/tests/test_hooks.py
+@@ -46,11 +46,25 @@ class PreToolUseCommandTest(HookTestCase):
+             self.assertEqual(code, 0, f"{command}: {err}")
+ 
+     def test_blocks_shell_writes_to_protected_paths(self):
+-        for command in ("echo x > policy/guard.json", "sed -i '' 's/a/b/' .claude/settings.json",
+-                        "rm .github/workflows/ci.yml", "git checkout -- policy/risk-tiers.json"):
++        for command in ("echo x > policy/guard.json", "echo x >>policy/guard.json",
++                        "sed -i '' 's/a/b/' .claude/settings.json", "perl -pi -e 's/a/b/' sdlc/hooks.py",
++                        "rm .github/workflows/ci.yml", "rm -r policy", "rm -rf ./policy/",
++                        "git checkout -- policy/risk-tiers.json", "git restore policy/guard.json",
++                        "cp /tmp/x policy/guard.json", "mv policy/guard.json /tmp/x",
++                        "cat /tmp/x | tee .claude/settings.json", "sudo rm policy/guard.json",
++                        f"echo x > {self.root}/policy/guard.json", "chmod +x .claude/hooks/a.sh"):
+             code, err = self.bash(command)
+             self.assertEqual(code, 2, command)
+-            self.assertIn("protected path", err)
++            self.assertIn("protected by", err)
++
++    def test_mentioning_protected_paths_without_writing_them_is_allowed(self):
++        for command in ("grep -n x sdlc/hooks.py 2>&1 | head", "cat policy/guard.json > /tmp/copy.json",
++                        "git diff -- policy/ > /tmp/p.diff", "cp policy/guard.json /tmp/guard.json",
++                        "git commit -q -F - <<'EOF'\nfeat: x\n\nrm policy/guard.json is mentioned here\nEOF",
++                        "python3 -m sdlc validate >/dev/null 2>&1", "git log -- .github/workflows/ci.yml",
++                        "git clone -q repo /tmp/w && rm -rf /tmp/w/build"):
++            code, err = self.bash(command)
++            self.assertEqual(code, 0, f"{command}: {err}")
+ 
+ 
+ class PreToolUseFileTest(HookTestCase):
