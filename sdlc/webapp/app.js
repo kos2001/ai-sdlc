@@ -115,6 +115,7 @@ const App = (() => {
   window.addEventListener("hashchange", render);
   window.addEventListener("DOMContentLoaded", () => {
     wireNewWork();
+    if (!location.hash) history.replaceState(null, "", "#/intro"); // first stop: what is different, and why
     $("#refresh").onclick = () => { loadRepo(); render(); };
     loadRepo();
     render();
