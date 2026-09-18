@@ -37,6 +37,7 @@ python3 -m sdlc --root /tmp/demo-shop serve         # http://127.0.0.1:8791/
 
 | Screen | What it shows |
 |---|---|
+| 소개 · 가이드 | a plain-language comparison with the traditional SDLC, and the full product story (`web/index.html`) embedded in the app |
 | 개요 | work in progress, gates waiting on a person, median gate wait (from git), AC coverage, open incidents |
 | 작업 보드 | work items by stage: intent → spec → plan → build → done |
 | 작업 상세 | the chain with approvals, an audit trail rebuilt from git history (agent vs human commits), AC coverage, artifact text |

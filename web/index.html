@@ -3,6 +3,7 @@
 <title>ai-sdlc</title>
 <meta name="description" content="코드가 병목이 아니게 된 뒤의 소프트웨어 개발 수명주기 — 커밋된 아티팩트, 사람의 게이트, 에이전트가 행동하는 순간의 거버넌스.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cpath d=%22M33.49 13.06A19.0 19.0 0 0 1 47.66 21.24%22 fill=%22none%22 stroke=%22%233D5BD9%22 stroke-width=%227.0%22/%3E%3Cpath d=%22M49.15 23.82A19.0 19.0 0 0 1 49.15 40.18%22 fill=%22none%22 stroke=%22%23D4502E%22 stroke-width=%227.0%22/%3E%3Cpath d=%22M47.66 42.76A19.0 19.0 0 0 1 33.49 50.94%22 fill=%22none%22 stroke=%22%230B8A6B%22 stroke-width=%227.0%22/%3E%3Cpath d=%22M30.51 50.94A19.0 19.0 0 0 1 16.34 42.76%22 fill=%22none%22 stroke=%22%238A4BD0%22 stroke-width=%227.0%22/%3E%3Cpath d=%22M14.85 40.18A19.0 19.0 0 0 1 14.85 23.82%22 fill=%22none%22 stroke=%22%23C9851A%22 stroke-width=%227.0%22/%3E%3Cpath d=%22M16.34 21.24A19.0 19.0 0 0 1 30.51 13.06%22 fill=%22none%22 stroke=%22%23C23A7A%22 stroke-width=%227.0%22/%3E%3Ccircle cx=%2232%22 cy=%2232%22 r=%225.2%22 fill=%22%23E0A548%22/%3E%3C/svg%3E">
+<script>try { if (new URLSearchParams(location.search).get("embed") === "1") document.documentElement.classList.add("embed"); } catch {}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
@@ -284,6 +285,12 @@ footer{border-top:1px solid var(--line);padding-block:32px 48px;display:flex;jus
 .play-detail .stage{display:inline-flex;align-items:center;gap:6px}
 .loop-svg .node .node-ico{color:var(--c)}
 .loop-svg .node.on .node-ico{color:#fff}
+
+/* embedded in the web app: the app provides navigation and language */
+.embed .side,.embed .nav{display:none!important}
+.embed .shell{grid-template-columns:minmax(0,1fr);max-width:1180px}
+.embed body{padding-inline:clamp(12px,3vw,32px)}
+.embed .hero{padding-top:clamp(24px,4vw,48px)}
 
 /* shell + sidebar */
 .shell{display:grid;grid-template-columns:236px minmax(0,1fr);gap:clamp(28px,3.4vw,56px);max-width:1440px;margin-inline:auto}

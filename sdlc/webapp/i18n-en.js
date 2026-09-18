@@ -1,6 +1,7 @@
 /* English strings for the web app. Keys mirror the Korean set in i18n.js. */
 I18N.add("en", {
-  "lang.label": "Language",
+  "lang.label": "Language", "nav.guide": "Guide · the full story",
+  "gd.crumb": "Guide", "gd.title": "The AI-native SDLC guide", "gd.lede": "From the bottleneck shift to the loop, stage-by-stage comparison, measurements from a real repository, the 12 plays, and governance — on one page.", "gd.open": "Open in a new window ↗",
   "nav.intro": "Intro · What changes", "nav.overview": "Overview", "nav.board": "Board", "nav.branch": "Branch check", "nav.incidents": "Incidents",
   "side.repo": "Repository", "side.about": "About ai-sdlc ↗", "top.refresh": "Refresh", "top.new": "New work",
   "new.h": "New work — draft intent", "new.lede": "Creates a draft intent.md. Add the evidence and the problem, then submit it to the product owner's gate.",

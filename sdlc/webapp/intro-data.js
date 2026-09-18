@@ -37,7 +37,7 @@ const INTRO = {
       ["에이전트가 스스로 승인하면요?", "못 합니다. 승인 기록은 사람 이름만 받고, Hook이 에이전트의 승인 명령과 승인 필드 편집을 막고, 이 앱에는 승인 버튼 자체가 없습니다. 승인은 사람이 자기 터미널에서 합니다."],
       ["리뷰가 사라지는 건가요?", "아니요, 옮겨 갑니다. 문서와 일반 코드는 자동 게이트와 에이전트 리뷰로 충분하고, 인증·결제·규제처럼 위험한 변경에는 사람이 더 깊게(T3는 두 명) 봅니다."],
     ],
-    more: "더 자세한 설명과 실제 저장소에서 잰 수치는 <a href=\"/about\" target=\"_blank\" rel=\"noopener\">소개 사이트</a>에 있습니다.",
+    more: "더 자세한 설명과 실제 저장소에서 잰 수치는 <a href=\"#/guide\">가이드</a>에 있습니다.",
   },
   en: {
     crumb: "Introduction", title: "What changes from the traditional SDLC",
@@ -76,6 +76,6 @@ const INTRO = {
       ["What if an agent approves itself?", "It can't. Approvals only accept a person's name, hooks block the agent's approve command and edits to approval fields, and this app has no approve button at all. People approve in their own terminal."],
       ["Does review go away?", "No, it moves. Docs and ordinary code are covered by automatic gates and agent review; risky changes such as auth, payments, and regulated data get a deeper human review (two people at T3)."],
     ],
-    more: "For the longer explanation and figures measured on a real repository, see the <a href=\"/about\" target=\"_blank\" rel=\"noopener\">product site</a>.",
+    more: "For the longer explanation and figures measured on a real repository, see the <a href=\"#/guide\">guide</a>.",
   },
 };
