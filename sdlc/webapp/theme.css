@@ -40,3 +40,9 @@
 .link h3 > span:first-child,.pipe span{display:inline-flex;align-items:center;gap:6px}
 .st-no{width:28px;height:28px}
 .st-no .ico{width:15px;height:15px;color:#fff}
+
+/* guide: the product story embedded in the app */
+.guide-lede{margin:0 0 12px;max-width:80ch}
+.guide-lede a{color:var(--accent);font-weight:600;text-decoration:none;white-space:nowrap}
+.guide{display:block;width:100%;height:calc(100vh - 190px);min-height:520px;border:1px solid var(--line);border-radius:14px;background:var(--ground);box-shadow:var(--shadow)}
+@media (max-width:820px){.guide{height:calc(100vh - 230px)}}

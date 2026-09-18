@@ -34,7 +34,8 @@ const I18N = (() => {
 })();
 
 I18N.add("ko", {
-  "lang.label": "언어",
+  "lang.label": "언어", "nav.guide": "가이드 · 전체 이야기",
+  "gd.crumb": "Guide", "gd.title": "AI-native SDLC 가이드", "gd.lede": "병목의 이동부터 루프, 단계별 비교, 실제 저장소 측정값, 12개 플레이, 거버넌스까지 한 페이지에 담았습니다.", "gd.open": "새 창에서 열기 ↗",
   "nav.intro": "소개 · 무엇이 다른가", "nav.overview": "개요", "nav.board": "작업 보드", "nav.branch": "브랜치 점검", "nav.incidents": "인시던트",
   "side.repo": "저장소", "side.about": "ai-sdlc 소개 ↗", "top.refresh": "새로고침", "top.new": "새 작업",
   "new.h": "새 작업 — 의도 초안", "new.lede": "intent.md 초안(draft)을 만듭니다. 근거와 문제를 채운 뒤 제출하면 제품 오너의 게이트로 갑니다.",
