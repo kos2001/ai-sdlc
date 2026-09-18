@@ -70,7 +70,7 @@ class ReadModelTest(ServerTestCase):
         self.assertEqual(b["risk"]["tier"], "T1")
         self.assertTrue(all(g["ok"] for g in b["gates"]))
 
-    def test_lessons_endpoint_reports_the_loop(self):
+    def test_lessons_endpoint_reports_the_loop(self):  # W-0001:AC-5
         status, s = self.request("GET", "/api/lessons")
         self.assertEqual(status, 200)
         self.assertEqual((s["total"], s["open"], s["closed"]), (3, 1, 2))

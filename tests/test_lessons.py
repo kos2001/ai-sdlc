@@ -28,7 +28,7 @@ class LessonsTest(unittest.TestCase):
         second = self.add()
         self.assertEqual((second["id"], second["status"]), ("L-002", "open"))
 
-    def test_close_requires_a_control_that_exists(self):
+    def test_close_requires_a_control_that_exists(self):  # W-0001:AC-1
         self.add()
         with self.assertRaisesRegex(lessons.LessonError, "does not exist"):
             lessons.close(self.root, "L-001", "test", "tests/missing.py::test_guard")
@@ -37,7 +37,7 @@ class LessonsTest(unittest.TestCase):
         closed = lessons.close(self.root, "L-001", "test", "tests/test_x.py::test_guard")
         self.assertEqual(closed["status"], "closed")
 
-    def test_rule_control_is_written_into_claude_md(self):
+    def test_rule_control_is_written_into_claude_md(self):  # W-0001:AC-2
         self.add()
         lessons.close(self.root, "L-001", "rule", rule="Re-measure over the full dataset before claiming a pattern.")
         text = (self.root / "CLAUDE.md").read_text()
@@ -45,7 +45,7 @@ class LessonsTest(unittest.TestCase):
         self.assertIn("- Re-measure over the full dataset before claiming a pattern. (L-001)", text)
         self.assertEqual(lessons.check(self.root)[0], [])
 
-    def test_check_fails_when_a_control_regresses(self):
+    def test_check_fails_when_a_control_regresses(self):  # W-0001:AC-3
         self.add(title="guard against X")
         lessons.close(self.root, "L-001", "test", "tests/test_x.py::test_guard")
         self.assertEqual(lessons.check(self.root)[0], [])
@@ -65,7 +65,7 @@ class LessonsTest(unittest.TestCase):
         lessons.save(self.root, ledger)
         self.assertTrue(any("missing" in e for e in lessons.check(self.root)[0]))
 
-    def test_status_measures_prevention_and_controls(self):
+    def test_status_measures_prevention_and_controls(self):  # W-0001:AC-4
         self.add(gate_existed=True, detected_by="gate")
         self.add()
         lessons.close(self.root, "L-001", "test", "tests/test_x.py::test_guard")
