@@ -1,10 +1,11 @@
-/* ai-sdlc web app — core: API client, router, shared helpers. Views live in views.js. */
+/* ai-sdlc web app — core: API client, router, shared helpers. Views live in views.js / detail.js / intro.js. */
 const App = (() => {
+  const { t } = I18N;
   const $ = (s, el = document) => el.querySelector(s);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const ROLE = { intent: "product-owner", spec: "architect", plan: "tech-lead" };
-  const STAGE_KO = { intent: "의도", spec: "명세", plan: "계획", build: "구현", done: "완료", rejected: "반려" };
-  const STATUS_KO = { draft: "초안", proposed: "승인 대기", accepted: "승인됨", rejected: "반려", superseded: "대체됨", done: "완료", open: "열림", diagnosed: "진단됨", closed: "닫힘" };
+  const stageName = (k) => t(`stage.${k}`);
+  const statusName = (s) => t(`status.${s}`) === `status.${s}` ? s : t(`status.${s}`);
 
   async function api(path, body) {
     const opts = body === undefined ? {} : {
@@ -18,28 +19,27 @@ const App = (() => {
   }
 
   function toast(msg) {
-    const t = $("#toast");
-    t.textContent = msg; t.hidden = false;
+    const el = $("#toast");
+    el.textContent = msg; el.hidden = false;
     clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => (t.hidden = true), 3200);
+    toast.timer = setTimeout(() => (el.hidden = true), 3200);
   }
 
   async function copy(text) {
-    try { await navigator.clipboard.writeText(text); toast("복사했습니다. 터미널에 붙여 넣어 실행하세요."); }
-    catch { toast("복사하지 못했습니다. 명령을 직접 선택해 복사하세요."); }
+    try { await navigator.clipboard.writeText(text); toast(t("copy.ok")); }
+    catch { toast(t("copy.fail")); }
   }
 
   const statusChip = (status) => {
     const cls = status === "proposed" ? "gate" : ["accepted", "done", "closed"].includes(status) ? "ok" : status === "rejected" || status === "open" ? "bad" : "";
-    return `<span class="chip ${cls}"><span class="dot"></span>${esc(STATUS_KO[status] || status)}</span>`;
+    return `<span class="chip ${cls}"><span class="dot"></span>${esc(statusName(status))}</span>`;
   };
   const tierChip = (tier) => (tier ? `<span class="chip ${tier === "T3" || tier === "T2" ? "gate" : ""}">${esc(tier)}</span>` : "");
   const approveCmd = (id, kind) => `python3 -m sdlc approve ${id} --stage ${kind} --role ${ROLE[kind]}`;
-  const cmdBlock = (id, kind) => `<span class="cmd"><code>${esc(approveCmd(id, kind))}</code><button class="btn small" type="button" data-copy="${esc(approveCmd(id, kind))}">복사</button></span>`;
+  const cmdBlock = (id, kind) => `<span class="cmd"><code>${esc(approveCmd(id, kind))}</code><button class="btn small" type="button" data-copy="${esc(approveCmd(id, kind))}">${esc(t("copy.btn"))}</button></span>`;
   const when = (iso) => {
-    if (!iso) return "커밋 전";
-    const d = new Date(iso);
-    return d.toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+    if (!iso) return t("when.none");
+    return new Date(iso).toLocaleString(I18N.locale, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
   };
 
   /* Markdown for artifacts: headings, lists, checkboxes, fenced code, inline code, bold. HTML comments dropped. */
@@ -77,7 +77,7 @@ const App = (() => {
     try {
       await r.render(view, hash.match(r.re));
     } catch (err) {
-      view.innerHTML = `<div class="empty">불러오지 못했습니다: ${esc(err.message)}<br><span class="fine">서버가 켜져 있는지 확인하세요: python3 -m sdlc serve</span></div>`;
+      view.innerHTML = `<div class="empty">${esc(t("load.fail", { msg: err.message }))}<br><span class="fine">${esc(t("load.hint"))}</span></div>`;
     }
     view.removeAttribute("aria-busy");
   }
@@ -102,7 +102,7 @@ const App = (() => {
       try {
         const r = await api("/api/work", body);
         dlg.close();
-        toast(`${r.id} 의도 초안을 만들었습니다: ${r.path}`);
+        toast(t("new.created", { id: r.id, path: r.path }));
         location.hash = `#/work/${r.id}`;
       } catch (ex) { err.textContent = ex.message; err.hidden = false; }
     });
@@ -111,15 +111,19 @@ const App = (() => {
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-copy]");
     if (b) copy(b.dataset.copy);
+    const l = e.target.closest("[data-lang]");
+    if (l) I18N.set(l.dataset.lang);
   });
   window.addEventListener("hashchange", render);
+  window.addEventListener("langchange", render);
   window.addEventListener("DOMContentLoaded", () => {
+    I18N.apply();
     wireNewWork();
-    if (!location.hash) history.replaceState(null, "", "#/intro"); // first stop: what is different, and why
+    if (!location.hash) history.replaceState(null, "", location.search + "#/intro"); // first stop: what is different, and why
     $("#refresh").onclick = () => { loadRepo(); render(); };
     loadRepo();
     render();
   });
 
-  return { $, esc, api, toast, route, render, setTitle, loadRepo, markdown, statusChip, tierChip, cmdBlock, when, ROLE, STAGE_KO, STATUS_KO };
+  return { $, esc, t, api, toast, route, render, setTitle, loadRepo, markdown, statusChip, tierChip, cmdBlock, when, stageName, ROLE };
 })();

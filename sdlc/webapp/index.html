@@ -12,29 +12,33 @@
 </head>
 <body>
 <div class="app">
-  <aside class="side" aria-label="탐색">
+  <aside class="side" aria-label="Navigation">
     <a class="brand" href="#/">
       <svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="10" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-dasharray="46 17" transform="rotate(-60 13 13)"/><circle cx="13" cy="13" r="3.2" fill="var(--gate)"/></svg>
       ai-sdlc
     </a>
     <nav class="nav">
-      <a href="#/intro" data-route="intro">소개 · 무엇이 다른가</a>
-      <a href="#/" data-route="overview">개요</a>
-      <a href="#/board" data-route="board">작업 보드</a>
-      <a href="#/branch" data-route="branch">브랜치 점검</a>
-      <a href="#/incidents" data-route="incidents">인시던트</a>
+      <a href="#/intro" data-route="intro" data-i18n="nav.intro">소개 · 무엇이 다른가</a>
+      <a href="#/" data-route="overview" data-i18n="nav.overview">개요</a>
+      <a href="#/board" data-route="board" data-i18n="nav.board">작업 보드</a>
+      <a href="#/branch" data-route="branch" data-i18n="nav.branch">브랜치 점검</a>
+      <a href="#/incidents" data-route="incidents" data-i18n="nav.incidents">인시던트</a>
     </nav>
     <div class="side-foot">
-      <div class="repo"><span class="lab">저장소</span><b id="repo-name">—</b><code id="repo-branch"></code></div>
-      <a href="/about" target="_blank" rel="noopener">ai-sdlc 소개 ↗</a>
+      <div class="repo"><span class="lab" data-i18n="side.repo">저장소</span><b id="repo-name">—</b><code id="repo-branch"></code></div>
+      <a href="/about" target="_blank" rel="noopener" data-i18n="side.about">ai-sdlc 소개 ↗</a>
     </div>
   </aside>
   <main class="main">
     <header class="top">
-      <div><span class="eyebrow" id="crumb"></span><h1 id="title">개요</h1></div>
+      <div><span class="eyebrow" id="crumb"></span><h1 id="title"></h1></div>
       <div class="top-actions">
-        <button class="btn" type="button" id="refresh" title="다시 불러오기">새로고침</button>
-        <button class="btn primary" type="button" id="new-work">새 작업</button>
+        <div class="lang" role="group" aria-label="Language / 언어">
+          <button type="button" data-lang="ko" aria-pressed="true">한국어</button>
+          <button type="button" data-lang="en" aria-pressed="false">English</button>
+        </div>
+        <button class="btn" type="button" id="refresh" data-i18n="top.refresh">새로고침</button>
+        <button class="btn primary" type="button" id="new-work" data-i18n="top.new">새 작업</button>
       </div>
     </header>
     <div id="view" aria-live="polite"></div>
@@ -43,28 +47,31 @@
 
 <dialog id="new-dialog" aria-labelledby="new-h">
   <form id="new-form" method="dialog">
-    <h2 id="new-h">새 작업 — 의도 초안</h2>
-    <p class="muted">intent.md 초안(draft)을 만듭니다. 근거와 문제를 채운 뒤 제출하면 제품 오너의 게이트로 갑니다.</p>
-    <label for="nf-title">제목</label>
-    <input id="nf-title" name="title" required maxlength="80" placeholder="예: Checkout latency for EU users">
-    <label for="nf-owner">책임 제품 오너</label>
-    <input id="nf-owner" name="owner" required placeholder="이름 &lt;email&gt;">
-    <label for="nf-tier">위험 등급</label>
+    <h2 id="new-h" data-i18n="new.h">새 작업 — 의도 초안</h2>
+    <p class="muted" data-i18n="new.lede"></p>
+    <label for="nf-title" data-i18n="new.title">제목</label>
+    <input id="nf-title" name="title" required maxlength="80" data-i18n-ph="new.titlePh">
+    <label for="nf-owner" data-i18n="new.owner">책임 제품 오너</label>
+    <input id="nf-owner" name="owner" required data-i18n-ph="new.ownerPh">
+    <label for="nf-tier" data-i18n="new.tier">위험 등급</label>
     <select id="nf-tier" name="tier">
-      <option value="T0">T0 · 문서</option><option value="T1" selected>T1 · 일반 기능</option>
-      <option value="T2">T2 · API·스키마·의존성</option><option value="T3">T3 · 인증·결제·규제·통제</option>
+      <option value="T0" data-i18n="tier.T0">T0</option><option value="T1" selected data-i18n="tier.T1">T1</option>
+      <option value="T2" data-i18n="tier.T2">T2</option><option value="T3" data-i18n="tier.T3">T3</option>
     </select>
     <p class="err" id="nf-err" hidden></p>
     <div class="row-end">
-      <button class="btn" type="button" id="nf-cancel">취소</button>
-      <button class="btn primary" type="submit">초안 만들기</button>
+      <button class="btn" type="button" id="nf-cancel" data-i18n="new.cancel">취소</button>
+      <button class="btn primary" type="submit" data-i18n="new.create">초안 만들기</button>
     </div>
   </form>
 </dialog>
 <div class="toast" id="toast" role="status" hidden></div>
+<script src="/i18n.js"></script>
+<script src="/i18n-en.js"></script>
 <script src="/app.js"></script>
 <script src="/views.js"></script>
 <script src="/detail.js"></script>
+<script src="/intro-data.js"></script>
 <script src="/intro.js"></script>
 </body>
 </html>
