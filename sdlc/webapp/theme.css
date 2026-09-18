@@ -46,3 +46,16 @@
 .guide-lede a{color:var(--accent);font-weight:600;text-decoration:none;white-space:nowrap}
 .guide{display:block;width:100%;height:calc(100vh - 190px);min-height:520px;border:1px solid var(--line);border-radius:14px;background:var(--ground);box-shadow:var(--shadow)}
 @media (max-width:820px){.guide{height:calc(100vh - 230px)}}
+
+/* improvement loop */
+.lgrid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:16px}
+.lh{font-size:15px;margin-bottom:10px}
+.lbar{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:13.5px;margin-top:8px}
+.lbar b{font-variant-numeric:tabular-nums}
+.lbar i{grid-column:1/-1;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--st-test) var(--w),var(--line) var(--w))}
+.lesson{grid-template-columns:64px 1fr}
+.lesson .lid{color:var(--st-test);padding-top:2px}
+.lesson.open{border-left:3px solid var(--gate)}
+.lesson.closed{border-left:3px solid var(--st-build)}
+.lwhat{margin:6px 0 4px;color:var(--ink-2);font-size:13.5px}
+.lesson p.fine{margin:2px 0}

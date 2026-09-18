@@ -14,7 +14,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from . import artifacts, bands, workitems
+from . import artifacts, bands, lessons, workitems
 
 PKG_ROOT = Path(__file__).resolve().parent.parent
 AGENT = ("Claude", "noreply@anthropic.com")
@@ -144,6 +144,17 @@ def build(root: Path) -> Path:
     breach = bands.check(bands.load_bands(root), {"checkout.p95_ms": [760, 830, 870, 910]})[0][0]
     bands.open_loop(root, breach, d.clock)
     d.commit("maintain: checkout p95 band breached", hours=0)
+
+    # The self-improvement loop: mistakes from this sample history, closed only by controls in the repo.
+    lessons.add(root, "EU p95 regressed after a cache TTL change", "incident", "INC-2026-001: p95 went 760 -> 910 ms over 4 samples.",
+                "TTL was lowered without a latency test.", False, "src/checkout/cache.py", detected_at="2026-09-06")
+    lessons.close(root, "L-001", "test", "tests/test_checkout.py::def test_eu_p95")
+    lessons.add(root, "Refund spec submitted without a threat model", "review", "The architect sent the T3 spec back once.",
+                "No rule asked for security notes on T3 specs.", False, "work/", detected_at="2026-09-03")
+    lessons.close(root, "L-002", "rule", rule="T3 specs fill Security & compliance notes before submit.")
+    lessons.add(root, "Plan gate stopped code pushed before plan approval", "gate", "CI blocked a W-0004 branch opened before plan.md was accepted.",
+                "Working ahead of the gate.", True, "work/", detected_at="2026-09-04")
+    d.commit("retrospect: record lessons from the first week", who=PEOPLE["lead"], hours=2)
 
     # A feature branch in progress, so the branch check has something to judge.
     d.git("checkout", "-q", "-b", "feature/w-0004-dark-mode")
