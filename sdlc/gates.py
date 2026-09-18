@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import artifacts, gitutil, risk
+from . import artifacts, gitutil, policy, risk
 
 WORK_REF = re.compile(r"\b(W-\d{4,})\b", re.IGNORECASE)
 TEST_DIRS = ("tests/", "evals/")
@@ -78,11 +78,24 @@ def _diff_lines(root: Path, base: str, head: str, path: str) -> tuple[list[str],
     return removed, added
 
 
+def _eval_guard_config(root: Path) -> tuple[tuple[str, ...], re.Pattern]:
+    """Test dirs and definition patterns, extended by optional policy/eval-guard.json:
+    {"test_dirs": ["tests/"], "test_definitions": ["^\\\\s*check\\\\("]} for house test styles."""
+    try:
+        extra = policy.load(root, "eval-guard.json")
+    except FileNotFoundError:
+        return TEST_DIRS, TEST_DEFINITION
+    dirs = TEST_DIRS + tuple(d if d.endswith("/") else d + "/" for d in extra.get("test_dirs", []))
+    patterns = [TEST_DEFINITION.pattern, *extra.get("test_definitions", [])]
+    return dirs, re.compile("|".join(f"(?:{p})" for p in patterns))
+
+
 def eval_guard(root: Path, base: str, head: str = "HEAD") -> GateResult:
     """Flag deleted tests/evals, removed test definitions or AC tags, and new skip markers."""
+    test_dirs, test_definition = _eval_guard_config(root)
     findings = []
     for status, path in gitutil.changed_files(root, base, head):
-        if not path.startswith(TEST_DIRS):
+        if not path.startswith(test_dirs):
             continue
         if status == "D":
             findings.append(f"{path}: test/eval file deleted")
@@ -90,7 +103,7 @@ def eval_guard(root: Path, base: str, head: str = "HEAD") -> GateResult:
         removed, added = _diff_lines(root, base, head, path)
         added_text = "\n".join(added)
         for line in removed:
-            if TEST_DEFINITION.match(line) and line.strip() not in {a.strip() for a in added}:
+            if test_definition.match(line) and line.strip() not in {a.strip() for a in added}:
                 findings.append(f"{path}: removed test definition `{line.strip()[:80]}`")
             for tag in AC_TAG.findall(line):
                 if tag not in added_text:

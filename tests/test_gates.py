@@ -96,3 +96,26 @@ class EvalGuardTest(RepoTestCase):
     def test_deleted_file_is_flagged(self):
         (self.root / "tests/test_cart.py").unlink()
         self.assertTrue(any("deleted" in m for m in self.guard().messages))
+
+
+class EvalGuardHouseStyleTest(RepoTestCase):
+    """Repos with their own assertion helpers (e.g. check("desc", cond)) declare them in policy."""
+
+    def setUp(self):
+        super().setUp()
+        self.write("tests/test_polar.py",
+                   'def run():\n    check("frozen bits stay frozen", ok)\n    check("list beats SC", better)\n')
+        self.commit("tests")
+        git(self.root, "checkout", "-q", "-b", "change")
+        path = self.root / "tests/test_polar.py"
+        path.write_text(path.read_text().replace('    check("list beats SC", better)\n', ""))
+        self.commit("drop a check")
+
+    def test_removed_house_assertion_is_invisible_without_config(self):
+        self.assertTrue(gates.eval_guard(self.root, "main").ok)
+
+    def test_removed_house_assertion_is_flagged_with_config(self):
+        self.write("policy/eval-guard.json", '{"test_definitions": ["^\\\\s*check\\\\("]}')
+        result = gates.eval_guard(self.root, "main")
+        self.assertFalse(result.ok)
+        self.assertTrue(any("list beats SC" in m for m in result.messages))
