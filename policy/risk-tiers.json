@@ -1,0 +1,21 @@
+{
+  "_doc": "Deterministic risk tiering (design §8.1). The highest matching tier wins; agents can raise a tier, never lower it.",
+  "tiers": {
+    "T0": {"human_reviews": 0, "agent_review": true, "release": "auto", "note": "docs and tooling config; sampled post-merge audit"},
+    "T1": {"human_reviews": 0, "agent_review": true, "release": "auto+canary", "note": "ordinary feature code; sampled post-merge audit"},
+    "T2": {"human_reviews": 1, "agent_review": true, "release": "auto+canary", "note": "code owner reviews findings and summary"},
+    "T3": {"human_reviews": 2, "agent_review": true, "release": "human-approved", "note": "code owner + domain expert, line by line"}
+  },
+  "rules": [
+    {"name": "auth-payments-crypto", "tier": "T3", "paths": ["**/auth/**", "**/payments/**", "**/billing/**", "**/crypto/**", "**/secrets/**"]},
+    {"name": "regulated-data", "tier": "T3", "paths": ["**/pii/**", "**/*pii*", "**/gdpr/**", "**/hipaa/**"]},
+    {"name": "infra-permissions", "tier": "T3", "paths": ["infra/**/iam/**", "**/*.tf", "**/rbac/**"]},
+    {"name": "sdlc-controls", "tier": "T3", "paths": ["policy/**", ".claude/settings.json", ".claude/hooks/**", ".github/workflows/**", ".github/CODEOWNERS", "sdlc/hooks.py", "sdlc/policy.py"]},
+    {"name": "schema-and-api", "tier": "T2", "paths": ["**/migrations/**", "**/openapi*.yaml", "**/openapi*.json", "**/*.proto", "api/**"]},
+    {"name": "dependencies", "tier": "T2", "paths": ["**/package.json", "**/package-lock.json", "**/pnpm-lock.yaml", "**/requirements*.txt", "**/pyproject.toml", "**/go.mod", "**/Cargo.toml", "**/pom.xml", "**/build.gradle*"]},
+    {"name": "agent-instructions", "tier": "T2", "paths": ["**/CLAUDE.md", ".claude/skills/**", ".claude/agents/**", "REVIEW.md"]},
+    {"name": "evals-and-tests", "tier": "T1", "paths": ["tests/**", "evals/**"]},
+    {"name": "docs", "tier": "T0", "paths": ["docs/**", "*.md", "work/**", "incidents/**"]}
+  ],
+  "default": "T1"
+}

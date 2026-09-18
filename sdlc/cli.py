@@ -11,7 +11,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import artifacts, gitutil, trace, workitems
+from . import artifacts, gitutil, hooks, risk, trace, workitems
 
 
 def _root(args) -> Path:
@@ -147,6 +147,26 @@ def cmd_trace(args) -> int:
     return 1 if args.strict and any(r["missing"] for r in rows) else 0
 
 
+def cmd_risk(args) -> int:
+    root = _root(args)
+    if args.paths:
+        result = risk.assess(root, args.paths, args.floor)
+    else:
+        result = risk.assess_diff(root, args.base, args.head, args.floor)
+    if args.json:
+        print(json.dumps(result, indent=2))
+    else:
+        print(f"risk tier: {result['tier']} — human reviews: {result['human_reviews']}, release: {result['release']}")
+        for r in result["reasons"]:
+            if r["tier"] == result["tier"]:
+                print(f"  {r['tier']} {r['path']} ({r['rule']})")
+    return 0
+
+
+def cmd_hook(args) -> int:
+    return hooks.run(args.event, _root(args))
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="sdlc", description=__doc__.splitlines()[0])
     p.add_argument("--root", help="repository root (default: git toplevel)")
@@ -192,6 +212,18 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--json", action="store_true")
     s.add_argument("--strict", action="store_true", help="exit 1 when any AC is uncovered")
     s.set_defaults(func=cmd_trace)
+
+    s = sub.add_parser("risk", help="risk tier of a diff (or explicit paths) from policy/risk-tiers.json")
+    s.add_argument("--base", default="origin/main")
+    s.add_argument("--head", default="HEAD")
+    s.add_argument("--floor", choices=artifacts.TIERS, help="minimum tier (e.g. from a PR label)")
+    s.add_argument("--json", action="store_true")
+    s.add_argument("paths", nargs="*")
+    s.set_defaults(func=cmd_risk)
+
+    s = sub.add_parser("hook", help="Claude Code hook handler (reads hook JSON on stdin)")
+    s.add_argument("event", choices=("pre-tool-use", "post-tool-use", "stop", "user-prompt-submit"))
+    s.set_defaults(func=cmd_hook)
     return p
 
 
