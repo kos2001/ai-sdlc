@@ -15,7 +15,7 @@ Every stage ends by **committing an artifact to Git**, and the next stage starts
 
 - Needs Python 3.11+ and git. No third-party packages (Pillow is optional, only for icon PNGs).
 - Parts: a CLI (`python3 -m sdlc`) · Claude Code hooks, skills, and subagents · GitHub Actions · a local web app · a product site.
-- 57 tests (`make check`), passing in GitHub Actions `ci`.
+- 70 tests (`make check`), passing in GitHub Actions `ci`.
 
 ## Contents
 
@@ -26,14 +26,15 @@ Every stage ends by **committing an artifact to Git**, and the next stage starts
 5. [CLI reference](#cli-reference)
 6. [Artifact format](#artifact-format)
 7. [Governance: risk tiers, hooks, approvals](#governance-risk-tiers-hooks-approvals)
-8. [Web app](#web-app)
-9. [CI/CD workflows](#cicd-workflows)
-10. [The 12 plays and their implementation](#the-12-plays-and-their-implementation)
-11. [Adopting it in another repository](#adopting-it-in-another-repository)
-12. [Repository layout](#repository-layout)
-13. [Development](#development)
-14. [Known limits](#known-limits)
-15. [Documentation](#documentation)
+8. [The self-improvement loop](#the-self-improvement-loop)
+9. [Web app](#web-app)
+10. [CI/CD workflows](#cicd-workflows)
+11. [The 12 plays and their implementation](#the-12-plays-and-their-implementation)
+12. [Adopting it in another repository](#adopting-it-in-another-repository)
+13. [Repository layout](#repository-layout)
+14. [Development](#development)
+15. [Known limits](#known-limits)
+16. [Documentation](#documentation)
 
 ---
 
@@ -72,7 +73,7 @@ intent.md ──accept──▶ spec.md ──approve──▶ plan.md ──app
 
 ```bash
 git clone https://github.com/kos2001/ai-sdlc.git && cd ai-sdlc
-make check                                           # 57 tests + artifact validation
+make check                                           # 70 tests + artifact validation
 
 # see the web app on a sample repository with every state (sample data)
 python3 -m sdlc demo /tmp/demo-shop
@@ -133,6 +134,7 @@ use it directly.
 | `events --base REF [--json]` | Status changes → next play and skill (orchestrator input) |
 | `bands check\|open --metrics m.json` | Judge control bands / on breach, open incident + proposed intent (deduplicated) |
 | `feedback comments.json… [--out file]` | `[rule]` / `[bug]` / `[false-positive]` review comments → rule and eval candidates |
+| `lessons status\|add\|close\|check` | The self-improvement loop: mistake → lesson → a control the repo checks ([below](#the-self-improvement-loop)) |
 | `release-record --base REF [--pr N] [--approver name…]` | Tier, work items, human approvers, agent co-authors |
 | `hook pre-tool-use\|post-tool-use\|stop\|user-prompt-submit` | Claude Code hook handler (JSON on stdin) |
 | `serve [--port 8791]` | Local web app (127.0.0.1 only) |
@@ -189,6 +191,36 @@ Hooks fail **closed** on malformed input or a broken policy file.
 **Approval rules** — people only (`claude`, `anthropic`, `[bot]`, `github-actions` refused), no duplicate approver,
 append-only (checked by `transitions` on PRs), two for T3 specs and plans.
 
+## The self-improvement loop
+
+Agents make mistakes. What matters is that the same mistake **never quietly comes back**.
+
+```
+mistake caught ──▶ lessons add (lesson, open) ──▶ write a control ──▶ lessons close (only with a control)
+      ▲                                                                              │
+      └──── make check / CI: fails if a closed lesson's control disappears ◀─────────┘
+```
+
+| Part | What it is |
+|---|---|
+| Ledger | [`lessons/ledger.json`](lessons/ledger.json) — per lesson: who found it (`gate`, `test`, `review`, `human`, `measurement`, `incident`), what happened, root cause, **whether an existing gate caught it first**, and the control |
+| Control | `path::needle` — a file and text that must stay in the repository. Kinds: `test`, `rule` (written into CLAUDE.md automatically), `policy`, `eval`, `doc` |
+| Enforcement | `sdlc lessons check` is part of `make check` — CI fails if a closed lesson's control (a test name, a rule line) disappears. Lessons open for over 30 days warn |
+| Measurement | `sdlc lessons status` and the web app's **Improvement loop** screen — share caught first by an existing gate (prevention rate), who found them, control kinds, controls still in place |
+| Agents | The [`retrospect`](.claude/skills/retrospect/SKILL.md) skill — when a mistake is caught, record and close it in the same change as the fix |
+
+```bash
+python3 -m sdlc lessons add "eval-guard missed deleted check() calls" --detected-by measurement \
+  --what "lls-kit tests are check(...) calls, so deleting one passed" --cause "test definition patterns were hard-coded"
+python3 -m sdlc lessons close L-012 --kind test --ref "tests/test_gates.py::class EvalGuardHouseStyleTest"
+python3 -m sdlc lessons close L-013 --kind rule --rule "Re-measure over the full set before reporting a pattern."
+python3 -m sdlc lessons status
+```
+
+This repository's ledger starts with the 11 mistakes actually made while building it. Nine are closed by a test or a
+rule; two (the hook's over-blocking) are still open. **An existing gate caught only 2 of 11 first (18%)** — people,
+reviews, and measurements found the rest after the fact. That share going up is the evidence the loop works.
+
 ## Web app
 
 ```bash
@@ -204,6 +236,7 @@ python3 -m sdlc --root <repo> serve        # http://127.0.0.1:8791/  (한국어 
 | Work item | The chain and its approvals, an audit trail rebuilt from git (agent vs person), ✓/✗ per AC, artifact text |
 | Branch check | The current branch's tier and the files that set it, the same gates CI runs, plays that follow a merge |
 | Incidents | Control band breaches and their follow-up intents |
+| Improvement loop | The lessons ledger, prevention rate, who found them, control kinds, controls in place |
 
 **API** (all JSON)
 
@@ -213,6 +246,7 @@ python3 -m sdlc --root <repo> serve        # http://127.0.0.1:8791/  (한국어 
 | GET | `/api/work`, `/api/work/W-NNNN` | Work list / detail (with text and audit trail) |
 | GET | `/api/branch?base=REF` | Risk tier, gate results, events |
 | GET | `/api/incidents` | Incidents |
+| GET | `/api/lessons` | The lessons ledger and its measures |
 | POST | `/api/work` | Create a draft intent `{title, owner, tier}` |
 | POST | `/api/work/W-NNNN/stage` | Draft the next stage `{stage}` |
 | POST | `/api/work/W-NNNN/submit` | Submit `{stage}` — gate violations return 409 |
@@ -241,8 +275,8 @@ environment, team names in [`.github/CODEOWNERS`](.github/CODEOWNERS), and "Requ
 |---|---|
 | 1 Capture intent | `sdlc new/submit`, `capture-intent` skill |
 | 2 CLAUDE.md | root [`CLAUDE.md`](CLAUDE.md) |
-| 3 Skills | 7 in [`.claude/skills/`](.claude/skills) |
-| 4 Feedback loop | `sdlc feedback`, `apply-feedback`, `feedback.yml` |
+| 3 Skills | 8 in [`.claude/skills/`](.claude/skills) |
+| 4 Feedback loop | `sdlc feedback`, `apply-feedback`, `feedback.yml`, the self-improvement loop (`sdlc lessons`, `retrospect`) |
 | 5 Hooks | `sdlc/hooks.py`, `policy/guard.json` |
 | 6 Plan mode | `plan-from-spec`, `sdlc plan-gate` |
 | 7 Subagents | [`.claude/agents/`](.claude/agents) — spec-conformance · security · test · perf (read-only) |
@@ -274,23 +308,25 @@ sdlc/                 CLI and library (standard library only, ≤12 KB per file)
   hooks.py            Claude Code hook handlers           events.py       status change → next play
   bands.py            control band → incident + intent    release.py      release record
   feedback.py         review comments → rule/eval ideas   api.py · server.py  web app backend
+  lessons.py          the self-improvement loop (lesson → control)
   demo.py             sample repository builder           cli.py · cli_ops.py command definitions
   webapp/             web app frontend (no build step, Korean/English)
 templates/            intent · spec · plan · incident templates
 policy/               guard.json (hook rules), risk-tiers.json (tiers)
-.claude/              settings.json (hooks), 7 skills, 4 agents
+.claude/              settings.json (hooks), 8 skills, 4 agents
 .github/workflows/    ci · pr-review · advance · control-band · feedback · release
 web/index.html        product site (Korean/English, also the in-app Guide) · web/icons/ icons
 bands/                example control bands
+lessons/ledger.json   the lessons ledger
 scripts/make_icons.py icon generator
 docs/                 design/ design doc · adoption/ case study · patches/ pending patch
-tests/                57 unittest cases
+tests/                70 unittest cases
 ```
 
 ## Development
 
 ```bash
-make check                                  # unit tests + artifact validation (same as CI)
+make check                                  # unit tests + artifact validation + lesson controls (same as CI)
 python3 -m unittest tests.test_server -v    # one module
 python3 scripts/make_icons.py [--png]       # regenerate icons (PNGs need Pillow)
 ```

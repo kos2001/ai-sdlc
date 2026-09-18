@@ -19,7 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from . import api, artifacts, gitutil, workitems
+from . import api, artifacts, gitutil, lessons, workitems
 
 APP_DIR = Path(__file__).parent / "webapp"
 SITE = Path(__file__).resolve().parent.parent / "web" / "index.html"
@@ -87,7 +87,7 @@ def make_handler(root: Path, allowed_hosts: set[str]):
                 self._json(exc.status, {"error": exc.message})
             except workitems.GateError as exc:
                 self._json(HTTPStatus.CONFLICT, {"error": str(exc)})
-            except gitutil.GitError as exc:
+            except (gitutil.GitError, lessons.LessonError) as exc:
                 self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
 
         # -- routes ---------------------------------------------------------------
@@ -104,6 +104,8 @@ def make_handler(root: Path, allowed_hosts: set[str]):
                 return self._json(HTTPStatus.OK, api.overview(root))
             if path == "/api/work":
                 return self._json(HTTPStatus.OK, api.work_items(root))
+            if path == "/api/lessons":
+                return self._json(HTTPStatus.OK, lessons.status(root))
             if path == "/api/incidents":
                 return self._json(HTTPStatus.OK, api.incidents(root))
             if path == "/api/branch":

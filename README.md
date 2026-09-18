@@ -15,7 +15,7 @@ ai-sdlc는 Anthropic Applied AI의 *AI-native SDLC 플레이북*을 실제로 �
 
 - Python 3.11+ 와 git만 있으면 됩니다. 외부 패키지는 쓰지 않습니다 (아이콘 PNG 생성만 Pillow 선택).
 - 구성: CLI(`python3 -m sdlc`) · Claude Code Hook/Skill/서브에이전트 · GitHub Actions · 로컬 웹 앱 · 소개 사이트.
-- 테스트 57개 (`make check`), GitHub Actions `ci`에서 통과.
+- 테스트 70개 (`make check`), GitHub Actions `ci`에서 통과.
 
 ## 목차
 
@@ -26,14 +26,15 @@ ai-sdlc는 Anthropic Applied AI의 *AI-native SDLC 플레이북*을 실제로 �
 5. [CLI 레퍼런스](#cli-레퍼런스)
 6. [아티팩트 형식](#아티팩트-형식)
 7. [거버넌스: 위험 등급 · Hook · 승인](#거버넌스-위험-등급--hook--승인)
-8. [웹 앱](#웹-앱)
-9. [CI/CD 워크플로](#cicd-워크플로)
-10. [12개 플레이와 구현](#12개-플레이와-구현)
-11. [다른 저장소에 도입하기](#다른-저장소에-도입하기)
-12. [저장소 구조](#저장소-구조)
-13. [개발](#개발)
-14. [알려진 한계](#알려진-한계)
-15. [문서](#문서)
+8. [자기 개선 루프](#자기-개선-루프)
+9. [웹 앱](#웹-앱)
+10. [CI/CD 워크플로](#cicd-워크플로)
+11. [12개 플레이와 구현](#12개-플레이와-구현)
+12. [다른 저장소에 도입하기](#다른-저장소에-도입하기)
+13. [저장소 구조](#저장소-구조)
+14. [개발](#개발)
+15. [알려진 한계](#알려진-한계)
+16. [문서](#문서)
 
 ---
 
@@ -72,7 +73,7 @@ intent.md ──수락──▶ spec.md ──승인──▶ plan.md ──승�
 
 ```bash
 git clone https://github.com/kos2001/ai-sdlc.git && cd ai-sdlc
-make check                                           # 테스트 57개 + 아티팩트 검증
+make check                                           # 테스트 70개 + 아티팩트 검증
 
 # 모든 상태가 들어 있는 예시 저장소(샘플 데이터)로 웹 앱 보기
 python3 -m sdlc demo /tmp/demo-shop
@@ -133,6 +134,7 @@ python3 -m sdlc --root /tmp/demo-shop serve          # → http://127.0.0.1:8791
 | `events --base REF [--json]` | 상태 변화 → 다음 플레이와 Skill (오케스트레이터 입력) |
 | `bands check\|open --metrics m.json` | control band 판정 / 위반 시 incident + proposed intent 생성 (중복 방지) |
 | `feedback comments.json… [--out 파일]` | `[rule]`·`[bug]`·`[false-positive]` 리뷰 코멘트를 규칙·eval 후보로 |
+| `lessons status\|add\|close\|check` | 자기 개선 루프: 실수 → 교훈 → 저장소가 확인하는 통제 ([아래](#자기-개선-루프)) |
 | `release-record --base REF [--pr N] [--approver 이름…]` | 등급·작업 항목·사람 승인자·에이전트 공동 작성자 기록 |
 | `hook pre-tool-use\|post-tool-use\|stop\|user-prompt-submit` | Claude Code Hook 핸들러 (stdin JSON) |
 | `serve [--port 8791]` | 로컬 웹 앱 (127.0.0.1 전용) |
@@ -189,6 +191,36 @@ Hook은 입력이 깨졌거나 정책 파일이 잘못되면 **막는 쪽으로*
 **승인 규칙** — 사람 ID만(`claude`, `anthropic`, `[bot]`, `github-actions` 거부), 같은 사람 중복 불가,
 추가만 가능(`transitions`가 PR에서 검사), T3 spec/plan은 2건.
 
+## 자기 개선 루프
+
+에이전트는 실수를 합니다. 중요한 것은 같은 실수가 **다시는 조용히 들어오지 않게** 하는 것입니다.
+
+```
+실수가 잡힘 ──▶ lessons add (교훈, 열림) ──▶ 통제 작성 ──▶ lessons close (통제가 있어야 닫힘)
+     ▲                                                                     │
+     └──── make check / CI: 닫힌 교훈의 통제가 사라지면 실패 ◀──────────────┘
+```
+
+| 요소 | 내용 |
+|---|---|
+| 원장 | [`lessons/ledger.json`](lessons/ledger.json) — 교훈마다 누가 찾았나(`gate`·`test`·`review`·`human`·`measurement`·`incident`), 무슨 일, 근본 원인, **기존 게이트가 먼저 잡았는가**, 통제 |
+| 통제 | `path::needle` — 저장소에 남아 있어야 하는 파일과 문자열. 종류: `test`, `rule`(CLAUDE.md에 자동 기록), `policy`, `eval`, `doc` |
+| 강제 | `sdlc lessons check`가 `make check`에 포함 — 닫힌 교훈의 통제(테스트 이름, 규칙 문장)가 사라지면 CI 실패. 30일 넘게 열린 교훈은 경고 |
+| 측정 | `sdlc lessons status` · 웹 앱 **개선 루프** 화면 — 기존 게이트가 먼저 잡은 비율(예방률), 발견 주체, 통제 종류, 살아 있는 통제 수 |
+| 에이전트 | [`retrospect`](.claude/skills/retrospect/SKILL.md) Skill — 실수가 잡히면 수정과 같은 변경에서 기록하고 닫는다 |
+
+```bash
+python3 -m sdlc lessons add "eval-guard가 check() 삭제를 못 봤다" --detected-by measurement \
+  --what "lls-kit 테스트는 check(...) 형식이라 삭제가 통과했다" --cause "테스트 정의 패턴이 하드코딩"
+python3 -m sdlc lessons close L-012 --kind test --ref "tests/test_gates.py::class EvalGuardHouseStyleTest"
+python3 -m sdlc lessons close L-013 --kind rule --rule "데이터에서 패턴을 말하기 전에 전체를 다시 잰다."
+python3 -m sdlc lessons status
+```
+
+이 저장소의 원장은 만드는 동안 실제로 한 실수 11건으로 시작합니다. 9건은 테스트나 규칙으로 닫혔고, 2건(Hook의
+과잉 차단)은 아직 열려 있습니다. **기존 게이트가 먼저 잡은 것은 11건 중 2건(18%)** — 나머지는 사람·리뷰·측정이
+사후에 찾았습니다. 이 비율이 올라가는 것이 루프가 작동한다는 증거입니다.
+
 ## 웹 앱
 
 ```bash
@@ -204,6 +236,7 @@ python3 -m sdlc --root <저장소> serve        # http://127.0.0.1:8791/  (한�
 | 작업 상세 | 체인과 승인, git에서 재구성한 감사 기록(에이전트·사람 구분), AC별 ✓/✗, 아티팩트 본문 |
 | 브랜치 점검 | 현재 브랜치의 위험 등급과 그 원인 파일, CI와 같은 게이트, 병합 후 이어질 플레이 |
 | 인시던트 | control band 이탈과 후속 의도 |
+| 개선 루프 | 교훈 원장, 예방률, 발견 주체, 통제 종류, 살아 있는 통제 |
 
 **API** (모두 JSON)
 
@@ -213,6 +246,7 @@ python3 -m sdlc --root <저장소> serve        # http://127.0.0.1:8791/  (한�
 | GET | `/api/work`, `/api/work/W-NNNN` | 작업 목록 / 상세(본문·감사 기록 포함) |
 | GET | `/api/branch?base=REF` | 위험 등급, 게이트 결과, 이벤트 |
 | GET | `/api/incidents` | 인시던트 |
+| GET | `/api/lessons` | 교훈 원장과 측정값 |
 | POST | `/api/work` | 의도 초안 생성 `{title, owner, tier}` |
 | POST | `/api/work/W-NNNN/stage` | 다음 단계 초안 `{stage}` |
 | POST | `/api/work/W-NNNN/submit` | 제출 `{stage}` — 게이트 위반은 409 |
@@ -241,8 +275,8 @@ python3 -m sdlc --root <저장소> serve        # http://127.0.0.1:8791/  (한�
 |---|---|
 | 1 Capture intent | `sdlc new/submit`, `capture-intent` Skill |
 | 2 CLAUDE.md | 루트 [`CLAUDE.md`](CLAUDE.md) |
-| 3 Skills | [`.claude/skills/`](.claude/skills) 7종 |
-| 4 Feedback loop | `sdlc feedback`, `apply-feedback`, `feedback.yml` |
+| 3 Skills | [`.claude/skills/`](.claude/skills) 8종 |
+| 4 Feedback loop | `sdlc feedback`, `apply-feedback`, `feedback.yml`, 자기 개선 루프(`sdlc lessons`, `retrospect`) |
 | 5 Hooks | `sdlc/hooks.py`, `policy/guard.json` |
 | 6 Plan mode | `plan-from-spec`, `sdlc plan-gate` |
 | 7 Subagents | [`.claude/agents/`](.claude/agents) — spec-conformance · security · test · perf (읽기 전용) |
@@ -274,23 +308,25 @@ sdlc/                 CLI와 라이브러리 (표준 라이브러리만, 파일�
   hooks.py            Claude Code Hook 핸들러              events.py       상태 변화 → 다음 플레이
   bands.py            control band → incident + intent    release.py      release record
   feedback.py         리뷰 코멘트 → 규칙·eval 후보         api.py · server.py  웹 앱 백엔드
+  lessons.py          자기 개선 루프 (교훈 → 통제)
   demo.py             예시 저장소 생성                     cli.py · cli_ops.py 명령 정의
   webapp/             웹 앱 프런트엔드 (빌드 단계 없음, 한/영)
 templates/            intent · spec · plan · incident 템플릿
 policy/               guard.json (Hook 규칙), risk-tiers.json (등급)
-.claude/              settings.json (Hook), skills/ 7종, agents/ 4종
+.claude/              settings.json (Hook), skills/ 8종, agents/ 4종
 .github/workflows/    ci · pr-review · advance · control-band · feedback · release
 web/index.html        소개 사이트 (한/영, 앱 안의 가이드로도 쓰임) · web/icons/ 아이콘
 bands/                control band 정의 예시
+lessons/ledger.json   교훈 원장
 scripts/make_icons.py 아이콘 생성
 docs/                 design/ 설계서 · adoption/ 도입 사례 · patches/ 적용 대기 패치
-tests/                unittest 57개
+tests/                unittest 70개
 ```
 
 ## 개발
 
 ```bash
-make check                                  # 단위 테스트 + 아티팩트 검증 (CI와 동일)
+make check                                  # 단위 테스트 + 아티팩트 검증 + 교훈 통제 (CI와 동일)
 python3 -m unittest tests.test_server -v    # 특정 모듈만
 python3 scripts/make_icons.py [--png]       # 아이콘 재생성 (PNG는 Pillow 필요)
 ```
