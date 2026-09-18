@@ -111,6 +111,26 @@ def register(sub) -> None:
     s.add_argument("--out")
     s.set_defaults(func=cmd_release_record)
 
+    s = sub.add_parser("lessons", help="self-improvement loop: mistakes -> lessons -> controls that must hold")
+    ls = s.add_subparsers(dest="action", required=True)
+    a = ls.add_parser("status", help="the ledger and its measures")
+    a.add_argument("--json", action="store_true")
+    a = ls.add_parser("check", help="fail when a closed lesson's control has regressed")
+    a.add_argument("--stale-days", type=int, default=30)
+    a = ls.add_parser("add", help="record a mistake as an open lesson")
+    a.add_argument("title")
+    a.add_argument("--detected-by", required=True, choices=("gate", "test", "review", "human", "measurement", "incident"))
+    a.add_argument("--what", required=True, help="what happened")
+    a.add_argument("--cause", required=True, help="root cause")
+    a.add_argument("--gate-existed", action="store_true", help="an existing gate caught it (prevention worked)")
+    a.add_argument("--area", default="")
+    a = ls.add_parser("close", help="close a lesson with a control that exists in the repository")
+    a.add_argument("id")
+    a.add_argument("--kind", required=True, choices=("test", "rule", "policy", "eval", "doc"))
+    a.add_argument("--ref", help="path::needle that must stay in the repository")
+    a.add_argument("--rule", help="with --kind rule: one-line rule appended to CLAUDE.md")
+    s.set_defaults(func=cmd_lessons)
+
     s = sub.add_parser("serve", help="local web app for this repository (127.0.0.1 only)")
     s.add_argument("--port", type=int, default=8791)
     s.set_defaults(func=cmd_serve)
@@ -142,4 +162,42 @@ def cmd_demo(args) -> int:
     from . import demo
     root = demo.build(Path(args.dir).resolve())
     print(f"sample repository: {root}\nnext: python3 -m sdlc --root {root} serve")
+    return 0
+
+
+def cmd_lessons(args) -> int:
+    from . import lessons
+    root = _root(args)
+    try:
+        if args.action == "add":
+            l = lessons.add(root, args.title, args.detected_by, args.what, args.cause, args.gate_existed, args.area)
+            print(f"{l['id']} opened: {l['title']}")
+            return 0
+        if args.action == "close":
+            l = lessons.close(root, args.id, args.kind, args.ref, args.rule)
+            print(f"{l['id']} closed by {l['control']['kind']}: {l['control']['ref']}")
+            return 0
+        if args.action == "check":
+            errors, warnings = lessons.check(root, args.stale_days)
+            for w in warnings:
+                print(f"WARN {w}", file=sys.stderr)
+            for e in errors:
+                print(f"ERROR {e}", file=sys.stderr)
+            if not errors:
+                print(f"lessons: ok ({len(lessons.load(root))} in ledger)")
+            return 1 if errors else 0
+    except lessons.LessonError as exc:
+        print(f"ERROR {exc}", file=sys.stderr)
+        return 1
+    st = lessons.status(root)
+    if args.json:
+        print(json.dumps(st, ensure_ascii=False, indent=2))
+        return 0
+    rate = f"{st['prevention_rate']:.0%}" if st["prevention_rate"] is not None else "—"
+    print(f"lessons {st['total']} · open {st['open']} · closed {st['closed']} · controls holding {st['controls_holding']}/{st['closed']}")
+    print(f"caught by an existing gate: {st['caught_by_existing_gate']}/{st['total']} ({rate}) — the rest were found after the fact")
+    print(f"detected by: {st['detected_by']} · controls: {st['controls']} · median days to close: {st['median_days_to_close']}")
+    for l in st["lessons"]:
+        mark = "open  " if l["status"] == "open" else "closed"
+        print(f"  [{mark}] {l['id']} {l['title']}")
     return 0

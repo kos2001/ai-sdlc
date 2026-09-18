@@ -34,7 +34,12 @@ const I18N = (() => {
 })();
 
 I18N.add("ko", {
-  "lang.label": "언어", "nav.guide": "가이드 · 전체 이야기",
+  "lang.label": "언어", "nav.lessons": "개선 루프",
+  "ls.crumb": "Self-improvement", "ls.title": "개선 루프", "ls.lede": "실수는 교훈이 되고, 교훈은 저장소가 확인할 수 있는 통제(테스트·규칙·정책)로만 닫힙니다. 닫힌 교훈의 통제가 사라지면 make check가 실패합니다.",
+  "ls.total": "교훈", "ls.open": "열림 {n}", "ls.prevent": "기존 게이트가 먼저 잡음", "ls.preventSub": "{n} / {t} — 나머지는 사후에 발견", "ls.holding": "살아 있는 통제", "ls.holdingSub": "닫힌 교훈의 통제가 저장소에 남아 있음",
+  "ls.by": "누가 찾았나", "ls.controls": "무엇으로 막았나", "ls.list": "원장", "ls.control": "통제", "ls.none": "아직 통제 없음 — 열린 교훈", "ls.cause": "원인",
+  "ls.empty": "아직 교훈이 없습니다. 실수가 잡히면 retrospect 스킬로 기록하세요: python3 -m sdlc lessons add",
+  "det.gate": "기존 게이트", "det.test": "테스트", "det.review": "리뷰", "det.human": "사람", "det.measurement": "측정", "det.incident": "인시던트", "nav.guide": "가이드 · 전체 이야기",
   "gd.crumb": "Guide", "gd.title": "AI-native SDLC 가이드", "gd.lede": "병목의 이동부터 루프, 단계별 비교, 실제 저장소 측정값, 12개 플레이, 거버넌스까지 한 페이지에 담았습니다.", "gd.open": "새 창에서 열기 ↗",
   "nav.intro": "소개 · 무엇이 다른가", "nav.overview": "개요", "nav.board": "작업 보드", "nav.branch": "브랜치 점검", "nav.incidents": "인시던트",
   "side.repo": "저장소", "side.about": "ai-sdlc 소개 ↗", "top.refresh": "새로고침", "top.new": "새 작업",

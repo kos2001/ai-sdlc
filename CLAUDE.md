@@ -4,7 +4,8 @@ This repo runs the Plan → Design → Build → Test → Deploy → Maintain lo
 Design rationale: `docs/design/ai-native-sdlc-design.md`.
 
 ## Commands
-- `make check` — unit tests + artifact validation. Run it before saying work is done.
+- `make check` — unit tests + artifact validation + lesson controls. Run it before saying work is done.
+- `python3 -m sdlc lessons status` — the self-improvement ledger (`lessons/ledger.json`).
 - `python3 -m sdlc validate` — schema, chain, and approval rules for every artifact.
 - `python3 -m sdlc new "<title>" --tier T1` / `stage <W-id> spec|plan` / `submit <path>` — create and propose artifacts.
 - `python3 -m sdlc trace <W-id>` — which acceptance criteria have tagged tests.
@@ -30,3 +31,11 @@ Design rationale: `docs/design/ai-native-sdlc-design.md`.
 
 ## Things agents get wrong here
 <!-- Append a line when the same review comment appears twice (Play 4: feedback loop). -->
+- When something you did is caught — by a test, gate, review, measurement, or person — record it with the
+  retrospect skill (`sdlc lessons add`) in the same change as the fix, and close it with a control that
+  would catch it next time (`sdlc lessons close`). Never weaken a test a lesson points to.
+
+## Lessons learned (maintained by `sdlc lessons`)
+<!-- lessons:start -->
+- Before reporting a pattern from data, re-measure it over the full set and cite the count. (L-005)
+<!-- lessons:end -->

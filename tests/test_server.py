@@ -70,6 +70,13 @@ class ReadModelTest(ServerTestCase):
         self.assertEqual(b["risk"]["tier"], "T1")
         self.assertTrue(all(g["ok"] for g in b["gates"]))
 
+    def test_lessons_endpoint_reports_the_loop(self):
+        status, s = self.request("GET", "/api/lessons")
+        self.assertEqual(status, 200)
+        self.assertEqual((s["total"], s["open"], s["closed"]), (3, 1, 2))
+        self.assertEqual(s["controls_holding"], 2)
+        self.assertEqual(s["caught_by_existing_gate"], 1)
+
     def test_unknown_item_and_static_files(self):
         self.assertEqual(self.request("GET", "/api/work/W-9999")[0], 404)
         status, html = self.request("GET", "/")
