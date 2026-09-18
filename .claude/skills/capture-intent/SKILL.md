@@ -1,6 +1,6 @@
 ---
 name: capture-intent
-description: Turn raw demand (tickets, customer feedback, metrics, incidents, interview notes) into a proposed intent.md with cited sources. Use when someone brings a problem, idea, or feature request, or asks to "start a work item" — before any spec or code exists.
+description: "Turn raw demand (tickets, customer feedback, metrics, incidents, interview notes) into a proposed intent.md with cited sources. Use when someone brings a problem, idea, or feature request, or asks to 'start a work item' — before any spec or code exists."
 ---
 
 # Capture intent (Play 1 — Plan)
