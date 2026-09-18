@@ -1,0 +1,57 @@
+# Play 12: the monitoring system posts metrics; a sustained breach becomes incident + intent + diagnosis PR.
+# Trigger: POST /repos/{owner}/{repo}/dispatches
+#   {"event_type": "control-band-breach", "client_payload": {"metrics": {"checkout.p95_ms": [810, 850, 905]}}}
+name: control-band
+on:
+  repository_dispatch:
+    types: [control-band-breach]
+  workflow_dispatch:
+    inputs:
+      metrics:
+        description: 'JSON object {"metric": [samples...]}'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: control-band
+  cancel-in-progress: false
+
+jobs:
+  breach:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - id: open
+        env:
+          DISPATCH_METRICS: ${{ toJson(github.event.client_payload.metrics) }}
+          INPUT_METRICS: ${{ github.event.inputs.metrics }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_METRICS:-}" ]; then printf '%s' "$INPUT_METRICS" > metrics.json; else printf '%s' "$DISPATCH_METRICS" > metrics.json; fi
+          git config user.name "sdlc-bot"; git config user.email "sdlc-bot@users.noreply.github.com"
+          git switch -c "sdlc/breach-${GITHUB_RUN_ID}"
+          python3 -m sdlc bands open --metrics metrics.json > opened.json
+          cat opened.json
+          incident=$(jq -r '[.[] | select(.status=="opened")][0].incident // empty' opened.json)
+          echo "incident=${incident}" >> "$GITHUB_OUTPUT"
+          rm metrics.json opened.json
+          if [ -n "$incident" ]; then git add -A && git commit -qm "maintain: control band breach ${incident}"; fi
+      - if: steps.open.outputs.incident != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Use the incident-to-intent skill on ${{ steps.open.outputs.incident }}.
+            Commit on the current branch, push it, and open a PR with `gh pr create` titled
+            "maintain: diagnose ${{ steps.open.outputs.incident }}". Request review from the service owner.
+          claude_args: >-
+            --allowedTools "Read,Glob,Grep,Edit,Write,Bash(python3 -m sdlc *),Bash(git *),Bash(gh pr create *)"

@@ -1,0 +1,34 @@
+# Layered agentic review (Play 10): gates, then four reviewer subagents, findings posted to the PR.
+name: pr-review
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Use the review-pr skill on PR #${{ github.event.pull_request.number }} in ${{ github.repository }}.
+            Diff range: origin/${{ github.event.pull_request.base.ref }}...HEAD.
+            Post one summary comment with `gh pr comment` and inline findings where you have file:line evidence.
+            If the change is riskier than `sdlc risk` says, add a higher risk:T* label; never remove one.
+            You do not approve or merge.
+          claude_args: >-
+            --allowedTools "Read,Glob,Grep,Task,Bash(python3 -m sdlc *),Bash(make check),Bash(git diff *),Bash(git log *),Bash(gh pr comment *),Bash(gh pr view *),Bash(gh pr diff *),Bash(gh pr edit * --add-label *),mcp__github_inline_comment__create_inline_comment"

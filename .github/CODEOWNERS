@@ -1,0 +1,19 @@
+# Replace the teams below with your own. Branch protection must require code-owner review.
+# Gates: whoever owns a stage approves its artifact.
+/work/**/intent.md          @your-org/product
+/work/**/spec.md            @your-org/architecture
+/work/**/plan.md            @your-org/tech-leads
+/incidents/                 @your-org/sre
+
+# Controls: changes here change governance itself (always T3).
+/policy/                    @your-org/security @your-org/platform
+/.claude/settings.json      @your-org/security @your-org/platform
+/.github/                   @your-org/security @your-org/platform
+/sdlc/hooks.py              @your-org/security
+/sdlc/policy.py             @your-org/security
+
+# Agent knowledge (T2): owned by the teams whose standards they encode.
+/CLAUDE.md                  @your-org/platform
+/.claude/skills/            @your-org/platform
+/.claude/agents/            @your-org/platform
+/REVIEW.md                  @your-org/platform
