@@ -1,0 +1,57 @@
+# Orchestrator: an accepted artifact on main fires the next play (design §9).
+name: advance
+on:
+  push:
+    branches: [main]
+    paths: ["work/**", "incidents/**"]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  route:
+    runs-on: ubuntu-latest
+    outputs:
+      events: ${{ steps.derive.outputs.events }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - id: derive
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          base="$BEFORE"; if [[ "$base" =~ ^0+$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then base=$(git rev-list --max-parents=0 HEAD | tail -1); fi
+          echo "events=$(python3 -m sdlc events --base "$base" --json)" >> "$GITHUB_OUTPUT"
+
+  play:
+    needs: route
+    if: needs.route.outputs.events != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        event: ${{ fromJson(needs.route.outputs.events) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Event `${{ matrix.event.event }}` for ${{ matrix.event.work_id }} (${{ matrix.event.path }}).
+            Use the `${{ matrix.event.skill }}` skill. Work on a new branch
+            `sdlc/${{ matrix.event.work_id }}-${{ matrix.event.play }}`, commit, push, and open a PR titled
+            "${{ matrix.event.work_id }}: ${{ matrix.event.play }}" with `gh pr create`.
+            Stop at the next human gate: submit artifacts, never approve or merge them.
+          claude_args: >-
+            --allowedTools "Read,Glob,Grep,Edit,Write,Task,Bash(python3 -m sdlc *),Bash(make check),Bash(git *),Bash(gh pr create *)"

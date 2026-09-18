@@ -1,0 +1,72 @@
+# Deterministic gates on every PR (design §7 Plays 5/6/8/10). Required status check for main.
+name: ci
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, edited]
+  pull_request_review:
+    types: [submitted, dismissed]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Tests and artifact validation
+        run: make check
+
+      - name: Status transitions and approvals are legal
+        if: github.event_name != 'push'
+        run: python3 -m sdlc transitions --base "origin/${BASE_REF}"
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+
+      - name: Plan gate (code needs an accepted plan.md)
+        if: github.event_name != 'push'
+        run: python3 -m sdlc plan-gate --base "origin/${BASE_REF}" --refs "${HEAD_REF}" "${PR_TITLE}"
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+
+      - name: Eval guard (no silent test weakening)
+        if: github.event_name != 'push' && !contains(github.event.pull_request.labels.*.name, 'eval-change-approved')
+        run: python3 -m sdlc eval-guard --base "origin/${BASE_REF}"
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+
+      - name: Risk tier and required human reviews
+        if: github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR: ${{ github.event.pull_request.number }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ' ') }}
+        run: |
+          set -euo pipefail
+          # A risk:T* label (added by agents or humans) is a floor: tiers only go up.
+          floor=$(grep -o 'risk:T[0-3]' <<<"$LABELS" | sort -r | head -1 | cut -d: -f2 || true)
+          python3 -m sdlc risk --base "origin/${BASE_REF}" ${floor:+--floor "$floor"} --json > risk.json
+          tier=$(jq -r .tier risk.json); need=$(jq -r .human_reviews risk.json)
+          python3 -m sdlc risk --base "origin/${BASE_REF}" ${floor:+--floor "$floor"}
+          gh label create "risk:${tier}" --color BFD4F2 --force >/dev/null 2>&1 || true
+          gh pr edit "$PR" --add-label "risk:${tier}"
+          have=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR}/reviews" --paginate \
+            --jq '[.[] | select(.state=="APPROVED" and (.user.type != "Bot"))] | map(.user.login) | unique | length')
+          echo "tier ${tier}: ${have}/${need} human approvals"
+          if [ "$have" -lt "$need" ]; then
+            echo "::error::risk ${tier} needs ${need} human approval(s); has ${have}"
+            exit 1
+          fi

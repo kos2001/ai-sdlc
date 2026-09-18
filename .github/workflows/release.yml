@@ -1,0 +1,67 @@
+# Play 11: every merge to main produces a release record; T3 releases wait for the
+# `production` environment's required reviewers (configure them in repo settings).
+# Set repository variable DEPLOY_COMMAND to your deploy entry point to enable deploys.
+name: release
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    outputs:
+      tier: ${{ steps.rec.outputs.tier }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - id: rec
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          base="$BEFORE"; if [[ "$base" =~ ^0+$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then base=$(git rev-list --max-parents=0 HEAD | tail -1); fi
+          pr=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" --jq '.[0].number // empty')
+          approvers=()
+          if [ -n "$pr" ]; then
+            while IFS= read -r login; do approvers+=(--approver "$login"); done < <(
+              gh api "repos/${GITHUB_REPOSITORY}/pulls/${pr}/reviews" --paginate \
+                --jq '.[] | select(.state=="APPROVED" and .user.type!="Bot") | .user.login' | sort -u)
+          fi
+          python3 -m sdlc release-record --base "$base" --pr "${pr:+#$pr}" "${approvers[@]}" --out release-record.md
+          cat release-record.md >> "$GITHUB_STEP_SUMMARY"
+          echo "tier=$(python3 -m sdlc risk --base "$base" --json | jq -r .tier)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-record-${{ github.sha }}
+          path: release-record.md
+
+  deploy-auto:
+    needs: record
+    if: needs.record.outputs.tier != 'T3' && vars.DEPLOY_COMMAND != ''
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash -c "$DEPLOY_COMMAND"
+        env:
+          DEPLOY_COMMAND: ${{ vars.DEPLOY_COMMAND }}
+
+  deploy-approved:
+    needs: record
+    if: needs.record.outputs.tier == 'T3' && vars.DEPLOY_COMMAND != ''
+    runs-on: ubuntu-latest
+    environment: production  # required reviewers = the human release gate
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash -c "$DEPLOY_COMMAND"
+        env:
+          DEPLOY_COMMAND: ${{ vars.DEPLOY_COMMAND }}

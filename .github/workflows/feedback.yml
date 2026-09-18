@@ -1,0 +1,38 @@
+# Play 4: weekly, turn tagged review comments into CLAUDE.md rules and regression evals.
+name: feedback
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - id: inbox
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          since=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          gh api "repos/${GITHUB_REPOSITORY}/pulls/comments?since=${since}" --paginate --slurp --jq 'add // []' > comments.json
+          python3 -m sdlc feedback comments.json --out evals/feedback/inbox.md
+          rm comments.json
+          if grep -q -- '- \[ \]' evals/feedback/inbox.md; then echo "actionable=true" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.inbox.outputs.actionable == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Use the apply-feedback skill with evals/feedback/inbox.md. Open one PR per category with `gh pr create`.
+          claude_args: >-
+            --allowedTools "Read,Glob,Grep,Edit,Write,Bash(python3 -m sdlc *),Bash(make check),Bash(git *),Bash(gh pr create *)"

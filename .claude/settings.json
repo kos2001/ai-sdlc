@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/secrets/**)"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {"hooks": [{"type": "command", "command": "cd \"$CLAUDE_PROJECT_DIR\" && python3 -m sdlc hook user-prompt-submit"}]}
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [{"type": "command", "command": "cd \"$CLAUDE_PROJECT_DIR\" && python3 -m sdlc hook pre-tool-use"}]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [{"type": "command", "command": "cd \"$CLAUDE_PROJECT_DIR\" && python3 -m sdlc hook post-tool-use"}]
+      }
+    ],
+    "Stop": [
+      {"hooks": [{"type": "command", "command": "cd \"$CLAUDE_PROJECT_DIR\" && python3 -m sdlc hook stop"}]}
+    ]
+  }
+}
