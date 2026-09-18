@@ -19,7 +19,7 @@
   .glance-head{display:none}
   .glance-row{grid-template-columns:1fr}
   .glance-row > span:first-child{padding-bottom:0}
-  .glance-row .g-old::before{content:"전통 · ";font-weight:600;color:var(--legacy)}
+  .glance-row .g-old::before{content:var(--old-label,"전통 · ");font-weight:600;color:var(--legacy)}
   .glance-row .g-new::before{content:"AI-native · ";font-weight:600;color:var(--accent)}
 }
 
@@ -33,7 +33,7 @@
 @media (max-width:900px){
   .stage-list li{grid-template-columns:1fr;gap:6px}
   .st-arrow{display:none}
-  .st-old::before{content:"전통: ";font-weight:600}
+  .st-old::before{content:var(--old-label,"전통 · ");font-weight:600}
   .st-diff{justify-self:start}
 }
 

@@ -41,7 +41,10 @@ code,.mono{font-family:var(--mono);font-size:.88em}
 .main{min-width:0;padding:24px clamp(16px,3.4vw,44px) 64px}
 .top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:24px}
 .top h1{font-size:clamp(26px,3vw,34px);font-weight:800;margin-top:6px}
-.top-actions{display:flex;gap:8px}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lang{display:inline-flex;padding:3px;border-radius:9px;background:var(--sunk);border:1px solid var(--line);gap:2px}
+.lang button{border:0;background:transparent;color:var(--muted);font:600 12.5px/1 var(--body);padding:7px 10px;border-radius:7px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
 @media (max-width:820px){
   .app{grid-template-columns:minmax(0,1fr)}
   .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 16px;border-right:0;border-bottom:1px solid var(--line)}
