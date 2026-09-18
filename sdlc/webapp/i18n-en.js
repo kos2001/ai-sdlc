@@ -1,6 +1,11 @@
 /* English strings for the web app. Keys mirror the Korean set in i18n.js. */
 I18N.add("en", {
-  "lang.label": "Language", "nav.guide": "Guide · the full story",
+  "lang.label": "Language", "nav.lessons": "Improvement loop",
+  "ls.crumb": "Self-improvement", "ls.title": "Improvement loop", "ls.lede": "Mistakes become lessons, and a lesson closes only with a control the repository can check — a test, a rule, a policy. If a closed lesson's control disappears, make check fails.",
+  "ls.total": "Lessons", "ls.open": "{n} open", "ls.prevent": "Caught first by an existing gate", "ls.preventSub": "{n} / {t} — the rest were found after the fact", "ls.holding": "Controls in place", "ls.holdingSub": "closed lessons whose control is still in the repo",
+  "ls.by": "Who found it", "ls.controls": "What now prevents it", "ls.list": "Ledger", "ls.control": "Control", "ls.none": "no control yet — open", "ls.cause": "Cause",
+  "ls.empty": "No lessons yet. When a mistake is caught, record it with the retrospect skill: python3 -m sdlc lessons add",
+  "det.gate": "existing gate", "det.test": "test", "det.review": "review", "det.human": "person", "det.measurement": "measurement", "det.incident": "incident", "nav.guide": "Guide · the full story",
   "gd.crumb": "Guide", "gd.title": "The AI-native SDLC guide", "gd.lede": "From the bottleneck shift to the loop, stage-by-stage comparison, measurements from a real repository, the 12 plays, and governance — on one page.", "gd.open": "Open in a new window ↗",
   "nav.intro": "Intro · What changes", "nav.overview": "Overview", "nav.board": "Board", "nav.branch": "Branch check", "nav.incidents": "Incidents",
   "side.repo": "Repository", "side.about": "About ai-sdlc ↗", "top.refresh": "Refresh", "top.new": "New work",

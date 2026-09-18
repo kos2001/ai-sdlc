@@ -1,0 +1,170 @@
+[
+  {
+    "id": "L-001",
+    "title": "Hook blocked harmless commands that only mentioned a protected path",
+    "area": "sdlc/hooks.py",
+    "detected_by": "human",
+    "detected_at": "2026-09-18",
+    "what_happened": "The first PreToolUse hook blocked 7 commands in its own build session — a grep, commit messages, heredocs — none of which wrote to a protected path.",
+    "root_cause": "The shell-write check matched a protected path anywhere in the command plus any redirect, instead of judging what is actually written.",
+    "gate_existed": false,
+    "status": "open",
+    "control": null
+  },
+  {
+    "id": "L-002",
+    "title": "eval-guard missed deleted check(...) assertions",
+    "area": "sdlc/gates.py",
+    "detected_by": "measurement",
+    "detected_at": "2026-09-18",
+    "what_happened": "Piloting on lls-kit: its tests are check(\"desc\", cond) calls, so removing one passed eval-guard silently.",
+    "root_cause": "Test definitions were hard-coded to def test_ / it( / @Test styles.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/test_gates.py::class EvalGuardHouseStyleTest"
+    },
+    "closed_at": "2026-09-18"
+  },
+  {
+    "id": "L-003",
+    "title": "sdlc/cli.py exceeded a 12 KB input-size gate",
+    "area": "sdlc/cli.py",
+    "detected_by": "gate",
+    "detected_at": "2026-09-18",
+    "what_happened": "Vendored into lls-kit, the 12.2 KB cli.py failed lls-kit's input-size gate.",
+    "root_cause": "No size budget on the package itself; the gate that caught it belonged to the consuming repository.",
+    "gate_existed": true,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/test_invariants.py::def test_package_files_fit_input_size_gate"
+    },
+    "closed_at": "2026-09-18"
+  },
+  {
+    "id": "L-004",
+    "title": "Spec template placeholder counted as acceptance criteria",
+    "area": "sdlc/artifacts.py",
+    "detected_by": "test",
+    "detected_at": "2026-09-18",
+    "what_happened": "The comment <!-- AC-1, AC-2 ... --> in the spec template was parsed as real criteria, so an empty spec could be submitted.",
+    "root_cause": "Section extraction did not strip HTML comments.",
+    "gate_existed": true,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/test_lifecycle.py::def test_full_chain_through_all_gates"
+    },
+    "closed_at": "2026-09-18"
+  },
+  {
+    "id": "L-005",
+    "title": "A finding reported from a sample was wrong on the full data",
+    "area": "docs/adoption/lls-kit.md",
+    "detected_by": "measurement",
+    "detected_at": "2026-09-18",
+    "what_happened": "Claimed PRs #20 and #24 were T3 only because of the test list; re-measuring all 25 PRs showed #20 also changed inputsize.py (a gate).",
+    "root_cause": "The claim was generalised from a partial diff check instead of measured over every PR.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "rule",
+      "ref": "CLAUDE.md::- Before reporting a pattern from data, re-measure it over the full set and cite the count. (L-005)"
+    },
+    "closed_at": "2026-09-18"
+  },
+  {
+    "id": "L-006",
+    "title": "sdlc serve crashed with a traceback on a busy port",
+    "area": "sdlc/cli_ops.py",
+    "detected_by": "human",
+    "detected_at": "2026-09-18",
+    "what_happened": "Starting the web app on 8766 (already taken) printed an OSError traceback.",
+    "root_cause": "serve() errors were not handled at the CLI boundary.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/test_invariants.py::def test_serve_reports_a_busy_port_instead_of_crashing"
+    },
+    "closed_at": "2026-09-18"
+  },
+  {
+    "id": "L-007",
+    "title": "Korean site rendered as mojibake when served locally",
+    "area": "web/index.html",
+    "detected_by": "human",
+    "detected_at": "2026-09-18",
+    "what_happened": "Served by http.server, every Korean character on the site was garbled in the first screenshot.",
+    "root_cause": "The page relied on the artifact wrapper for <meta charset>; served directly it had none.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/test_invariants.py::def test_pages_declare_utf8"
+    },
+    "closed_at": "2026-09-18"
+  },
+  {
+    "id": "L-008",
+    "title": "Agent and skill descriptions with ': ' were invalid YAML",
+    "area": ".claude/agents",
+    "detected_by": "review",
+    "detected_at": "2026-09-18",
+    "what_happened": "Frontmatter like description: Reviews a diff for security defects: authn/... fails a real YAML parser.",
+    "root_cause": "Generated frontmatter values were not quoted.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/test_invariants.py::def test_frontmatter_descriptions_with_colons_are_quoted"
+    },
+    "closed_at": "2026-09-18"
+  },
+  {
+    "id": "L-009",
+    "title": "Site logo shipped with no arcs",
+    "area": "web/index.html",
+    "detected_by": "measurement",
+    "detected_at": "2026-09-18",
+    "what_happened": "A DOM check found 0 arc paths in the brand mark after the icon change.",
+    "root_cause": "The patch script's regex expected stroke-width=\"7\" but the generated SVG said \"7.0\".",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/test_invariants.py::def test_site_brand_mark_has_all_six_arcs"
+    },
+    "closed_at": "2026-09-18"
+  },
+  {
+    "id": "L-010",
+    "title": "Pipeline links carried two style attributes",
+    "area": "sdlc/webapp/views.js",
+    "detected_by": "review",
+    "detected_at": "2026-09-18",
+    "what_happened": "Adding a stage colour produced <a style=... style=...>; the browser dropped the second attribute.",
+    "root_cause": "Attributes were added by string edit without merging an existing style.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/test_invariants.py::def test_no_element_template_repeats_the_style_attribute"
+    },
+    "closed_at": "2026-09-18"
+  },
+  {
+    "id": "L-011",
+    "title": "Blocked-command patterns match text inside heredocs and messages",
+    "area": "sdlc/hooks.py",
+    "detected_by": "human",
+    "detected_at": "2026-09-18",
+    "what_happened": "Commits whose message mentioned the approve command, and a heredoc containing the CLI example, were blocked as if they ran it.",
+    "root_cause": "blocked_commands regexes run on the raw command, including heredoc bodies and quoted strings; the pending patch fixes shell writes but not this.",
+    "gate_existed": false,
+    "status": "open",
+    "control": null
+  }
+]
