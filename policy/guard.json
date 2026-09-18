@@ -1,0 +1,26 @@
+{
+  "_doc": "Enforced by `sdlc hook pre-tool-use` while the agent acts (Play 5). Humans change this file; the agent cannot.",
+  "protected_paths": [
+    "policy/**",
+    ".claude/settings.json",
+    ".claude/hooks/**",
+    ".github/workflows/**",
+    ".github/CODEOWNERS",
+    "sdlc/hooks.py",
+    "sdlc/policy.py"
+  ],
+  "blocked_commands": [
+    {"pattern": "\\brm\\s+-[a-zA-Z]*r[a-zA-Z]*\\s+(/|~|\\$HOME)(\\s|$|/\\*)", "reason": "recursive delete of root or home"},
+    {"pattern": "\\bgit\\s+push\\b[^;&|]*(\\s--force(-with-lease)?\\b|\\s-f\\b)", "reason": "force push rewrites shared history"},
+    {"pattern": "\\bgit\\s+push\\b[^;&|]*\\s(origin\\s+)?(HEAD:)?(main|master)(\\s|$)", "reason": "direct push to the default branch; open a PR"},
+    {"pattern": "--no-verify\\b", "reason": "bypasses git hooks"},
+    {"pattern": "\\bsdlc\\s+approve\\b", "reason": "gate approvals are recorded by humans only"},
+    {"pattern": "\\b(curl|wget)\\b[^|;&]*\\|\\s*(sudo\\s+)?(ba|z)?sh\\b", "reason": "piping a download into a shell"},
+    {"pattern": "\\b(terraform|tofu|pulumi)\\s+(apply|destroy)\\b", "reason": "infrastructure changes go through the pipeline"},
+    {"pattern": "\\bkubectl\\s+(apply|delete|scale|rollout|patch|edit)\\b", "reason": "cluster changes go through the pipeline"},
+    {"pattern": "\\bgh\\s+pr\\s+merge\\b", "reason": "merging is a human gate"},
+    {"pattern": "\\bgh\\s+release\\s+create\\b", "reason": "releasing is a human gate"}
+  ],
+  "shell_write_pattern": "(>|\\btee\\b|\\bsed\\s+-i|\\bperl\\s+-[a-z]*i|\\bmv\\b|\\bcp\\b|\\brm\\b|\\bchmod\\b|\\btruncate\\b|\\bln\\b|git\\s+(checkout|restore)\\b)",
+  "gate_statuses": ["accepted", "done", "rejected"]
+}
