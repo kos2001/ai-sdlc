@@ -14,7 +14,11 @@ MAX_FILE = 12 * 1024
 
 class InvariantTest(unittest.TestCase):
     def test_package_files_fit_input_size_gate(self):
-        """L-003: sdlc/cli.py grew to 12.2 KB and failed lls-kit's input-size gate once vendored."""
+        """L-003: sdlc/cli.py grew to 12.2 KB and failed lls-kit's input-size gate once vendored.
+
+        W-0002:AC-7 - `make check` runs this, and it is what held required_approvals
+        to a size that survives vendoring.
+        """
         paths = [*ROOT.glob("sdlc/*.py"), *[p for p in ROOT.glob("sdlc/webapp/*") if p.suffix in {".js", ".css", ".html"}]]
         too_big = [f"{p.relative_to(ROOT)} {p.stat().st_size}" for p in paths if p.stat().st_size > MAX_FILE]
         self.assertEqual(too_big, [])
