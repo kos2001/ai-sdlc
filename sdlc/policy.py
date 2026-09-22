@@ -56,3 +56,30 @@ def relative(root: Path, file_path: str) -> str | None:
         return p.resolve().relative_to(root.resolve()).as_posix()
     except ValueError:
         return None
+
+
+def human_reviews(root: Path, tier: str) -> int | None:
+    """`tiers[<tier>].human_reviews` from risk-tiers.json, or None if it is not usable.
+
+    A bool is not a count: `True` would silently read as 1.
+    """
+    try:
+        n = load(root, "risk-tiers.json").get("tiers", {})[tier]["human_reviews"]
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return None
+    return n if isinstance(n, int) and not isinstance(n, bool) else None
+
+
+def required_approvals(kind: str, tier: str, root: Path | None = None) -> int:
+    """How many humans a gate needs (policy/risk-tiers.json, `human_reviews`).
+
+    Floor of 1, so a tier saying 0 still needs one. Unreadable policy or no root
+    keeps the built-in rule: 2 for a T3 spec/plan, else 1. See W-0002.
+    """
+    if kind not in ("spec", "plan"):
+        return 1
+    if root is not None:
+        n = human_reviews(root, tier)
+        if n is not None:
+            return max(1, n)
+    return 2 if tier == "T3" else 1

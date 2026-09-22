@@ -10,7 +10,7 @@ import datetime as dt
 import statistics
 from pathlib import Path
 
-from . import artifacts, events, gates, gitutil, risk, trace
+from . import artifacts, events, gates, gitutil, policy, risk, trace
 
 STAGES = ("intent", "spec", "plan")
 SEP = "\x1f"
@@ -74,7 +74,7 @@ def _artifact_summary(art: artifacts.Artifact, index: dict, coverage: dict) -> d
         "status": art.status or "unreadable",
         "tier": tier or None,
         "approvals": approvals,
-        "needed": artifacts.required_approvals(art.kind, tier),
+        "needed": policy.required_approvals(art.kind, tier, art.root),
         "issues": [i.message for i in artifacts.validate(art, index, coverage)],
     }
 

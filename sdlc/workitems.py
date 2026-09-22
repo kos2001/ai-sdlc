@@ -6,7 +6,7 @@ import datetime as dt
 import re
 from pathlib import Path
 
-from . import artifacts, frontmatter, trace
+from . import artifacts, frontmatter, policy, trace
 
 TEMPLATE_DIR = "templates"
 
@@ -121,7 +121,7 @@ def approve(path: Path, root: Path, by: str, role: str) -> artifacts.Artifact:
         raise GateError(f"{by} already approved {art.rel}")
     approvals.append({"by": by, "role": role, "at": today()})
     art.meta["approvals"] = approvals
-    if len(approvals) >= artifacts.required_approvals(art.kind, _tier_for(art, root)):
+    if len(approvals) >= policy.required_approvals(art.kind, _tier_for(art, root), root):
         art.meta["status"] = "accepted"
     _save(art)
     return art

@@ -15,7 +15,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import frontmatter
+from . import frontmatter, policy
 
 WORK_DIR = "work"
 INCIDENT_DIR = "incidents"
@@ -154,12 +154,6 @@ def plan_steps(plan_body: str) -> tuple[int, int]:
     return len(marks), sum(1 for m in marks if m in "xX")
 
 
-def required_approvals(kind: str, tier: str) -> int:
-    if kind in ("spec", "plan") and tier == "T3":
-        return 2
-    return 1
-
-
 def _tier_rank(tier: str) -> int:
     return TIERS.index(tier) if tier in TIERS else -1
 
@@ -219,7 +213,7 @@ def validate(art: Artifact, index: dict[str, Artifact], coverage: dict[str, set[
         spec = _sibling(art, "spec.md", index)
         tier = str(spec.meta.get("risk_tier", "")) if spec else ""
     if art.status in APPROVED:
-        need = required_approvals(kind, tier)
+        need = policy.required_approvals(kind, tier, art.root)
         if len(approvals) < need:
             err(f"status '{art.status}' needs {need} human approval(s), has {len(approvals)}")
 
