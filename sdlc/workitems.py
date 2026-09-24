@@ -127,6 +127,27 @@ def approve(path: Path, root: Path, by: str, role: str) -> artifacts.Artifact:
     return art
 
 
+def recheck(path: Path, root: Path) -> artifacts.Artifact:
+    """Accept an artifact whose recorded approvals already meet the current policy.
+
+    When a repo lowers `human_reviews` (W-0002), artifacts sitting at `proposed`
+    stay there: `approve` adds an approval and the same person cannot add a second
+    one. The only way out was editing `status` by hand, which walks past the gate
+    with no record and no validation.
+
+    This makes no approval. It only re-counts what is already written down, and
+    refuses when that is not enough.
+    """
+    art = artifacts.load(path, root)
+    _require(art, "proposed")
+    approvals = [a for a in art.meta.get("approvals") or [] if isinstance(a, dict)]
+    need = policy.required_approvals(art.kind, _tier_for(art, root), root)
+    if len(approvals) < need:
+        raise GateError(f"{art.rel}: needs {need} approval(s), has {len(approvals)}")
+    art.meta["status"] = "accepted"
+    return _save_if_valid(art, root, "recheck")
+
+
 def reject(path: Path, root: Path, by: str, reason: str) -> artifacts.Artifact:
     art = artifacts.load(path, root)
     _require(art, "proposed")

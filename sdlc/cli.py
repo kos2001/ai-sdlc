@@ -121,6 +121,13 @@ def cmd_approve(args) -> int:
     return 0
 
 
+def cmd_recheck(args) -> int:
+    root = _root(args)
+    art = workitems.recheck(_artifact_path(root, args.artifact, args.stage), root)
+    print(f"{art.rel}: {art.status} ({len(art.meta.get('approvals') or [])} approval(s))")
+    return 0
+
+
 def cmd_reject(args) -> int:
     root = _root(args)
     by = args.by or gitutil.identity(root)
@@ -194,6 +201,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     for name, func, helptext in (("submit", cmd_submit, "draft -> proposed"),
                                  ("approve", cmd_approve, "record a human approval"),
+                                 ("recheck", cmd_recheck,
+                                  "proposed -> accepted when recorded approvals already suffice"),
                                  ("reject", cmd_reject, "proposed -> rejected"),
                                  ("done", cmd_done, "accepted -> done")):
         s = sub.add_parser(name, help=helptext)
