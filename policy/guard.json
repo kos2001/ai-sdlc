@@ -15,6 +15,7 @@
     {"pattern": "\\bgit\\s+push\\b[^;&|]*\\s(origin\\s+)?(HEAD:)?(main|master)(\\s|$)", "reason": "direct push to the default branch; open a PR"},
     {"pattern": "--no-verify\\b", "reason": "bypasses git hooks"},
     {"pattern": "\\bsdlc\\s+approve\\b", "reason": "gate approvals are recorded by humans only"},
+    {"pattern": "\\bsdlc\\s+recheck\\b", "reason": "moving an artifact past a gate is a human action, even when it records no approval"},
     {"pattern": "\\b(curl|wget)\\b[^|;&]*\\|\\s*(sudo\\s+)?(ba|z)?sh\\b", "reason": "piping a download into a shell"},
     {"pattern": "\\b(terraform|tofu|pulumi)\\s+(apply|destroy)\\b", "reason": "infrastructure changes go through the pipeline"},
     {"pattern": "\\bkubectl\\s+(apply|delete|scale|rollout|patch|edit)\\b", "reason": "cluster changes go through the pipeline"},
