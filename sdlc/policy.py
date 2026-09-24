@@ -83,3 +83,26 @@ def required_approvals(kind: str, tier: str, root: Path | None = None) -> int:
         if n is not None:
             return max(1, n)
     return 2 if tier == "T3" else 1
+
+
+SPEC_VERSION = re.compile(r"V\d+\.(?:x|\d+)(?:\.(?:y|\d+))?|RFC\s*\d+", re.I)
+
+
+def t3_evidence(art: Artifact, intent: Artifact, err) -> None:
+    """A T3 spec shows what it rests on: a clause *with a version*, or why not one.
+
+    A repo lowering `human_reviews` to 1 buys that with evidence (W-0002). A clause
+    alone is not it - "38.214 5.1.3" means different tables in different releases.
+    Gates and policy rest on defects, not specs; the intent's `sources` say which.
+    """
+    if str(art.meta.get("risk_tier")) != "T3":
+        return
+    sources = intent.meta.get("sources") or []
+    if not sources:
+        err("T3 needs sources in intent.md: the clause and version it rests on, "
+            "or why the source text is not the evidence")
+        return
+    kinds = {str(s.get("kind")) for s in sources if isinstance(s, dict)}
+    if "spec" in kinds and not SPEC_VERSION.search(json.dumps(sources, ensure_ascii=False) + art.body):
+        err("T3 cites a clause without a version "
+            "(e.g. '38.214 V18.10.0 5.1.3', 'RFC 3095 5.9.2')")
