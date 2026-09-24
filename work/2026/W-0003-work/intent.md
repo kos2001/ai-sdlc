@@ -1,14 +1,17 @@
 ---
 id: W-0003
 type: intent
-status: proposed
+status: accepted
 owner: kos2001 <62705131+kos2001@users.noreply.github.com>
 sources:
   - kind: defect
     ref: "lls-kit W-0018: spec 이 승인 1 건을 갖고도 proposed 에 남아, 사람이 status 를 손으로 고쳐야 했다 (2026-09-23)"
 risk_tier: T2
 origin: human
-approvals: []
+approvals:
+  - by: kos2001 <62705131+kos2001@users.noreply.github.com>
+    role: product-owner
+    at: 2026-09-24
 ---
 
 # 승인 요건이 낮아진 아티팩트를 다시 센다

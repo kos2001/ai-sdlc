@@ -1,27 +1,32 @@
 ---
 id: W-0003
 type: plan
-status: draft
+status: accepted
 spec: ./spec.md
-approvals: []
+approvals:
+  - by: kos2001 <62705131+kos2001@users.noreply.github.com>
+    role: product-owner
+    at: 2026-09-24
 ---
 
 # 승인 요건이 낮아진 아티팩트를 다시 센다 — Plan
 
 ## Steps
 
-- [ ] `workitems.recheck(art, root)` — 요건을 세고, 충분하면 accepted, 아니면
+- [x] `workitems.recheck(art, root)` — 요건을 세고, 충분하면 accepted, 아니면
       GateError. `approvals:` 는 읽기만 — `W-0003:AC-1` `AC-2` `AC-3`
-- [ ] `proposed` 가 아니면 거절 (`_require`) — `W-0003:AC-4`
-- [ ] 저장은 `_save_if_valid` 로 — `W-0003:AC-5`
-- [ ] `cli.py` 에 하위 명령
-- [ ] 훅의 차단 목록에 더한다 — **`policy/**` 는 보호 경로라 사람이 한다.**
-      패치를 만들어 두고 알린다 — `W-0003:AC-6`
-- [ ] `tests/test_approvals.py` 에 이어 붙인다 — `AC-1` ~ `AC-5`
-- [ ] **변이로 확인**: 요건 검사를 지우면 AC-2 가 잡는가, 기록을 건드리면
-      AC-3 이 잡는가
-- [ ] `make check` — `W-0003:AC-7`
-- [ ] 커밋 · push · PR
+- [x] `proposed` 가 아니면 거절 (`_require`) — `W-0003:AC-4`
+- [x] 저장은 `_save_if_valid` 로 — `W-0003:AC-5`
+- [x] `cli.py` 에 하위 명령
+- [x] 훅의 차단 목록에 더한다 — `W-0003:AC-6`
+- [x] `tests/test_approvals.py` 에 이어 붙인다 — `AC-1` ~ `AC-5`
+- [x] **변이로 확인**: 요건 검사를 지우면 AC-2 가 잡는가, 기록을 건드리면
+      AC-3 이 잡는가.
+      **AC-2 는 처음에 못 잡았다** — 검사를 지워도 뒤의 `validate` 가 막아
+      거절은 났고, 그 메시지에 우연히 `2` 와 `1` 이 들어 있었다. 메시지를
+      구분해 조였다 (`needs 2 approval(s), has 1`)
+- [x] `make check` — `W-0003:AC-7`
+- [x] 커밋 · push · PR
 
 ## Test strategy
 

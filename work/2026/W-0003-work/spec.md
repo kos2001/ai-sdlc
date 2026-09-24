@@ -1,11 +1,14 @@
 ---
 id: W-0003
 type: spec
-status: draft
+status: accepted
 intent: ./intent.md
 skills_applied: []
 risk_tier: T2
-approvals: []
+approvals:
+  - by: kos2001 <62705131+kos2001@users.noreply.github.com>
+    role: product-owner
+    at: 2026-09-24
 ---
 
 # 승인 요건이 낮아진 아티팩트를 다시 센다 — Spec

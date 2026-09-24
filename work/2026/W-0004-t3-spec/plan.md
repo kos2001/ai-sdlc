@@ -1,9 +1,12 @@
 ---
 id: W-0004
 type: plan
-status: draft
+status: accepted
 spec: ./spec.md
-approvals: []
+approvals:
+  - by: kos2001 <62705131+kos2001@users.noreply.github.com>
+    role: product-owner
+    at: 2026-09-24
 ---
 
 # T3 spec 에 원문 근거를 요구한다 — Plan

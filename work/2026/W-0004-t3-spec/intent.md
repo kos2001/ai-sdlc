@@ -1,14 +1,17 @@
 ---
 id: W-0004
 type: intent
-status: proposed
+status: accepted
 owner: kos2001 <62705131+kos2001@users.noreply.github.com>
 sources:
   - kind: defect
     ref: lls-kit W-0019 가 T3 승인을 2 건에서 1 건으로 낮추며 진 빚 - 정책이 요구하는 '원문 근거' 는 강제되지 않는다
 risk_tier: T2
 origin: human
-approvals: []
+approvals:
+  - by: kos2001 <62705131+kos2001@users.noreply.github.com>
+    role: product-owner
+    at: 2026-09-24
 ---
 
 # T3 spec 에 원문 근거를 요구한다
