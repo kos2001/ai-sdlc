@@ -47,7 +47,24 @@ def _t3_evidence(art, err):
                 "(e.g. '38.214 V18.10.0 5.1.3', 'RFC 3095 5.9.2')")
 ```
 
-`risk_tier` 를 읽는 자리는 이미 있다 (`validate` 가 승인 수를 셀 때 쓴다).
+근거는 **intent 의 `sources`** 에서 읽는다. spec 템플릿에는 `sources` 칸이 없다 —
+무엇에 기대는지는 intent 가 적는 자리다. spec 본문도 같이 본다.
+
+`sdlc/artifacts.py` 가 12 KB 한도 근처라 검사는 `sdlc/policy.py` 에 둔다
+(`required_approvals` 가 간 자리와 같다). 등급이 무엇을 요구하는가는 정책 쪽 물음이다.
+
+### 구현하며 알게 된 것 — AC-4 는 이미 지켜지고 있었다
+
+`sources` 가 빈 intent 는 **제출 자체가 안 된다**:
+
+```
+sources must cite at least one ticket/metric/incident/interview once proposed
+```
+
+그래서 빈 `sources` 를 든 T3 spec 은 생기지 않는다 — 새 검사의 그 갈래는 **닿지
+않는다**. 방어로 남겨 두되, AC-4 를 지키는 것은 이 검사가 아니라 intent 의 기존
+규칙이다. 시험도 그 자리에서 본다. 닿지 않는 코드를 "내가 막았다" 고 세면
+게이트 수만 늘고 막는 힘은 늘지 않는다.
 
 ### 왜 버전까지인가
 

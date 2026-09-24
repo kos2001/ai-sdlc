@@ -11,6 +11,7 @@ starts the next:
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -254,6 +255,7 @@ def _validate_spec(art: Artifact, index, err) -> None:
             err(f"spec is '{art.status}' but intent.md is '{intent.status}' (intent must be accepted first)")
         if not acceptance_ids(art.body):
             err("section '## Acceptance criteria' must list AC-1, AC-2, ...")
+        policy.t3_evidence(art, intent, err)
     if _tier_rank(str(art.meta.get("risk_tier"))) < _tier_rank(str(intent.meta.get("risk_tier"))):
         err(f"risk_tier {art.meta.get('risk_tier')} is lower than intent's {intent.meta.get('risk_tier')} — tiers can only go up")
     if art.meta.get("id") != intent.meta.get("id"):

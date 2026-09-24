@@ -13,15 +13,16 @@ approvals:
 
 ## Steps
 
-- [ ] `artifacts.py` 에 `_t3_evidence` 를 더하고 `_validate_spec` 에서 부른다 —
+- [x] 검사를 더하고 `_validate_spec` 에서 부른다. `artifacts.py` 가 12 KB 한도
+      근처라 `policy.py` 에 뒀다 —
       `W-0004:AC-1` `AC-2` `AC-3` `AC-4`
-- [ ] T3 이 아니거나 spec 이 아니면 지나간다 — `W-0004:AC-5`
-- [ ] `tests/test_t3_evidence.py` — 다섯 갈래를 본다
-- [ ] **변이로 확인**: 버전 정규식을 느슨하게 하면 AC-1 이 잡는가,
+- [x] T3 이 아니거나 spec 이 아니면 지나간다 — `W-0004:AC-5`
+- [x] `tests/test_t3_evidence.py` — 다섯 갈래를 본다
+- [x] **변이로 확인**: 버전 정규식을 느슨하게 하면 AC-1 이 잡는가,
       `sources` 검사를 빼면 AC-4 가 잡는가
-- [ ] 12 KB 게이트 (`artifacts.py` 가 한도 근처다 - 넘치면 `policy.py` 로 옮긴다)
-- [ ] `make check` — `W-0004:AC-6`
-- [ ] 커밋 · push · PR
+- [x] 12 KB 게이트 (`artifacts.py` 가 한도 근처다 - 넘치면 `policy.py` 로 옮긴다)
+- [x] `make check` — `W-0004:AC-6`
+- [x] 커밋 · push · PR
 
 ## Test strategy
 
