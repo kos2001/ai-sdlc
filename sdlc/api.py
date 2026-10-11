@@ -7,6 +7,7 @@ elsewhere. Gate decisions are deliberately absent: approvals stay a human CLI ac
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import statistics
 from pathlib import Path
 
@@ -211,6 +212,7 @@ def overview(root: Path) -> dict:
         branch = None
     return {
         "repo": root.name, "branch": branch, "generated_at": _now().isoformat(timespec="seconds"),
+        "workspace_id": hashlib.sha256(str(root.resolve()).encode("utf-8")).hexdigest(),
         "work_items": len(items), "by_stage": by_stage, "waiting": waiting,
         "issues": sum(i["issues"] for i in items),
         "incidents_open": sum(1 for i in incidents(root) if i["status"] != "closed"),

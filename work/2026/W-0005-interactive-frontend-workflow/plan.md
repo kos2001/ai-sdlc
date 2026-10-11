@@ -88,3 +88,40 @@ AC-1/AC-5/AC-7/AC-8에 실제 브라우저 검증을 추가한다. 새 dialog는
 후속 검증 로그: `/private/tmp/ai-sdlc-interaction-check.log`,
 `/private/tmp/ai-sdlc-interaction-unit.log`, `/private/tmp/ai-sdlc-interaction-live.log`.
 스크린샷: `/private/tmp/ai-sdlc-frontend-qa/` (미리보기·빠른 이동·편집 화면).
+
+## Research-driven navigation refinement
+사용자가 GitHub 및 웹 검색을 통해 추가 기능을 구현하도록 요청했다.
+`research.md`의 1차 자료에 근거하여 기존 보드 탐색(R1/R2), 키보드 이동(R5),
+오류 복구와 반응형(R7/R8)을 다음과 같이 확장한다.
+
+- 보드 검색·필터·정렬·보기 조합을 이름 있는 보기로 저장, 열기, 갱신, 이름 변경,
+  삭제, 링크 복사한다. 변경 중 표시와 명시적 저장을 제공한다.
+- 보드/목록/상세에서 작업 즐겨찾기, 최근 본 작업과 저장된 보기의 빠른 이동을 제공한다.
+- 필드 검색은 stage/tier/owner/id/is, 따옴표, 쉼표 OR, 조건 간 AND, 부정을 지원한다.
+  잘못된 알려진 값/따옴표는 오류와 도움말을 표시한다. 알 수 없는 접두사는 일반 텍스트다.
+- 개인 데이터는 workspace_id별 localStorage에 둔다. overview에 root의 SHA-256
+  식별자를 추가하여 같은 이름의 다른 저장소에서도 설정을 격리한다. 경로 자체는 보내지 않는다.
+- 저장소 접근 실패는 현재 탭 메모리로 복구하고 안내한다. 손상된 데이터는 검증하며
+  다른 탭의 변경을 반영한다. 아티팩트·승인 메타데이터·쓰기 API는 변경하지 않는다.
+
+검증: AC-1은 검색·보기 CRUD/URL 복원·즐겨찾기·최근 작업·저장소 격리,
+AC-5는 키보드·초점·미저장 편집 보호, AC-7은 손상/차단 storage·다른 탭 동기화,
+AC-8은 ko/en·375px/1440px·light/dark 렌더링을 확인한다. 기존 make check와
+브라우저 회귀 검증을 유지하고 독립 브라우저 시나리오를 추가한다.
+
+### Research refinement evidence
+- [x] GitHub API로 Plane의 view/favorite store를 읽고, 공식 GitHub/Plane/Linear 문서를 비교해 `research.md`에 근거를 기록했다.
+- [x] 보기 CRUD·변경 조건 표시·이름 변경 중 입력 유지·새로고침·개인 ID 없는 공유 URL을 검증했다.
+- [x] 보드/목록/상세 즐겨찾기와 최근 작업, 빠른 이동의 개인 바로가기와 저장된 보기를 검증했다.
+- [x] 필드 검색·문구·AND/쉼표 OR·부정·입력 오류와 일반 아포스트로피 처리를 검증했다.
+- [x] 같은 이름의 저장소 격리, 손상된 설정, 읽기 차단/쓰기 용량 초과, 즐겨찾기 상한을 검증했다.
+- [x] 다른 탭의 설정 변경 및 저장된 보기로 이탈 시 편집 중 입력이 유지됨을 검증했다.
+- [x] 기존 브라우저 11개 그룹 + 추가 7개 그룹 통과, ko/en·375×812/1440×1000·light/dark 캡처 검토.
+- [x] 개인 탐색에서 POST 0건, 임시 저장소의 모든 기존 아티팩트 내용 불변.
+- [x] 실 서버에서 필드 검색·별표·보기 저장/재로딩·빠른 이동·모바일 폭, JS 오류 0건·POST 0건 확인.
+- [x] `make check`: 101 tests passed; artifact and lesson controls validated. `trace W-0005 --strict`: 8/8.
+- [x] 사용자의 한/영 README 요청에 따라 언어 전환·문서 링크를 명시하고, 두 버전의 기능·API·브라우저 검증 안내를 함께 갱신했다.
+
+로그: `/private/tmp/ai-sdlc-discovery-check.log`, `/private/tmp/ai-sdlc-discovery-unit.log`,
+`/private/tmp/ai-sdlc-discovery-live.log`. 검증: `tests/discovery.js`,
+`tests/test_server.py::test_workspace_identity_is_stable_and_separates_same_named_roots`.
