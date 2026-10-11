@@ -17,6 +17,13 @@ const Editor = (() => {
   window.addEventListener("beforeunload", (e) => {
     if ([...buffers.values()].some((b) => changed(b) || b.pending)) { e.preventDefault(); e.returnValue = ""; }
   });
+  document.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.isComposing || event.altKey || !(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "s" || document.querySelector("dialog[open]")) return;
+    const form = document.querySelector("#draft-form"), button = document.querySelector("#draft-save");
+    if (!form || !button) return;
+    event.preventDefault();
+    if (!button.disabled) form.requestSubmit(button);
+  });
   function mount(panel, w, kind) {
     const a = w.chain[kind], k = key(w.id, kind);
     let e = buffers.get(k);
@@ -26,8 +33,9 @@ const Editor = (() => {
       buffers.set(k, e);
     }
     panel.innerHTML = `<div class="editor"><p class="muted">${esc(t("ui.editNote"))}</p>
-      <form id="draft-form"><div class="editor-columns"><label class="field" for="draft-body"><span>${esc(t("ui.body"))}</span>
-      <textarea id="draft-body" name="body" spellcheck="false">${esc(e.body)}</textarea></label>
+      <form id="draft-form"><div class="editor-columns"><div class="editor-input"><label class="field" for="draft-body"><span>${esc(t("ui.body"))}</span></label>
+      <div class="format-tools" role="group" aria-label="${esc(t("edit.format"))}">${["heading", "bold", "list", "task", "code"].map((k) => `<button class="btn small" type="button" data-format="${k}">${esc(t(`edit.${k}`))}</button>`).join("")}</div>
+      <textarea id="draft-body" name="body" spellcheck="false" aria-describedby="edit-shortcut">${esc(e.body)}</textarea><p class="fine" id="edit-shortcut">${esc(t("edit.shortcut"))}</p></div>
       <section class="preview"><h2>${esc(t("ui.preview"))}</h2><div class="doc" id="draft-preview"></div></section></div>
       ${kind === "intent" ? `<fieldset class="source-set"><legend>${esc(t("ui.sources"))}</legend><div id="source-rows"></div><button class="btn small" type="button" data-add-source>${esc(t("ui.addSource"))}</button></fieldset>` : ""}
       <p class="err" id="draft-error" role="alert" hidden></p>
@@ -55,6 +63,28 @@ const Editor = (() => {
       target.querySelectorAll("[data-remove-source]").forEach((b) => (b.onclick = () => { e.sources.splice(Number(b.dataset.removeSource), 1); sources(); update(); panel.querySelector("[data-add-source]").focus(); }));
     };
     input.oninput = () => { e.body = input.value; update(); };
+    form.querySelectorAll("[data-format]").forEach((button) => (button.onclick = () => {
+      if (e.pending) return;
+      const format = button.dataset.format;
+      let start = input.selectionStart, end = input.selectionEnd;
+      let selected = input.value.slice(start, end);
+      let replacement;
+      if (["heading", "list", "task"].includes(format)) {
+        const last = end > start && input.value[end - 1] === "\n" ? end - 1 : end;
+        start = start ? input.value.lastIndexOf("\n", start - 1) + 1 : 0;
+        const stop = input.value.indexOf("\n", last);
+        end = stop < 0 ? input.value.length : stop;
+        selected = input.value.slice(start, end) || t("edit.placeholder");
+        const prefix = { heading: "## ", list: "- ", task: "- [ ] " }[format];
+        replacement = selected.split("\n").map((line) => prefix + line.replace(/^(#{1,6}\s+|[-*]\s+(\[[ xX]\]\s+)?)/, "")).join("\n");
+      } else {
+        selected ||= t("edit.placeholder");
+        const marker = format === "bold" ? "**" : "`";
+        replacement = format === "code" && selected.includes("\n") ? `\n\`\`\`\n${selected}\n\`\`\`\n` : `${marker}${selected}${marker}`;
+      }
+      input.setRangeText(replacement, start, end, "select");
+      input.focus(); e.body = input.value; update();
+    }));
     const add = panel.querySelector("[data-add-source]");
     if (add) add.onclick = () => {
       if (e.sources.length >= 50) return;

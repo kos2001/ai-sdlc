@@ -11,7 +11,7 @@
     if (!view.isConnected) return;
     setTitle(`${w.id} · ${stageName(w.stage)}`, w.title);
     view.innerHTML = `
-      <a class="back-link" href="#/board">${esc(t("ui.back"))}</a>
+      <a class="back-link" href="#${esc(/^\/board(?:\?|$)/.test(params.get("back") || "") ? params.get("back") : "/board")}">${esc(t("ui.back"))}</a>
       <div class="work-meta">
         ${tierChip(w.tier)}<span class="chip">${esc(t("wd.owner", { o: w.owner || "—" }))}</span>${w.origin === "maintain-loop" ? `<span class="chip gate">${esc(t("wd.loop"))}</span>` : ""}
       </div>
