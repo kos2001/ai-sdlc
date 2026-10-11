@@ -1,5 +1,14 @@
 /* Strings for interactive navigation, editing and recovery. */
 I18N.add("ko", {
+  "quick.open": "빠른 이동", "quick.title": "어디로 이동할까요?", "quick.close": "닫기",
+  "quick.placeholder": "작업 ID, 제목, 담당자 또는 화면 검색", "quick.screen": "화면",
+  "quick.results": "이동할 화면과 작업", "quick.count": "검색 결과 {n}개 · 최대 15개 표시",
+  "quick.hint": "↑ ↓ 선택 · Enter 이동 · Esc 닫기",
+  "peek.label": "미리보기", "peek.work": "{id} 미리보기", "peek.detail": "상세 열기",
+  "peek.readOnly": "미리보기에서는 내용을 읽을 수 있습니다. 초안은 편집 화면에서 수정하세요.",
+  "edit.format": "Markdown 서식", "edit.heading": "제목", "edit.bold": "굵게", "edit.list": "목록",
+  "edit.task": "체크리스트", "edit.code": "코드", "edit.placeholder": "내용",
+  "edit.shortcut": "텍스트를 선택하고 서식을 적용하세요. Ctrl / ⌘ S로 저장할 수 있습니다.",
   "ui.loading": "불러오는 중…", "ui.retry": "다시 시도", "ui.required": "제목과 담당자를 입력하세요.",
   "ui.search": "검색", "ui.searchPh": "ID, 제목, 담당자 검색", "ui.all": "전체",
   "ui.stage": "단계", "ui.tier": "위험 등급", "ui.focus": "작업 상태", "ui.sort": "정렬",
@@ -21,6 +30,15 @@ I18N.add("ko", {
   "wd.docNote": "초안은 앱에서 편집할 수 있습니다. 승인 결정은 사람의 터미널에서 합니다.",
 });
 I18N.add("en", {
+  "quick.open": "Quick switch", "quick.title": "Where would you like to go?", "quick.close": "Close",
+  "quick.placeholder": "Search work ID, title, owner or screen", "quick.screen": "Screen",
+  "quick.results": "Screens and work items", "quick.count": "{n} matches · showing up to 15",
+  "quick.hint": "↑ ↓ select · Enter open · Esc close",
+  "peek.label": "Preview", "peek.work": "Preview {id}", "peek.detail": "Open details",
+  "peek.readOnly": "Read the artifact here. Open the editor to change a draft.",
+  "edit.format": "Markdown formatting", "edit.heading": "Heading", "edit.bold": "Bold", "edit.list": "List",
+  "edit.task": "Checklist", "edit.code": "Code", "edit.placeholder": "Text",
+  "edit.shortcut": "Select text, then apply formatting. Press Ctrl / ⌘ S to save.",
   "ui.loading": "Loading…", "ui.retry": "Try again", "ui.required": "Enter a title and an owner.",
   "ui.search": "Search", "ui.searchPh": "Search ID, title or owner", "ui.all": "All",
   "ui.stage": "Stage", "ui.tier": "Risk tier", "ui.focus": "Work status", "ui.sort": "Sort",

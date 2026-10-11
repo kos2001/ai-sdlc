@@ -233,13 +233,16 @@ python3 -m sdlc --root <repo> serve        # http://127.0.0.1:8791/  (한국어 
 | Intro | What changes from the traditional SDLC — at a glance, stage by stage, who does what, live cards from this repository, FAQ |
 | Guide | The full story (`web/index.html`) inside the app |
 | Overview | Work in progress, gates waiting on people, median gate wait (from git), AC coverage, open incidents, approval commands to copy |
-| Board | Board/list views; search ID, title and owner; filter stage, tier, awaiting approval and validation issues; sort. Filters persist in the URL |
-| Work item | Chain, audit trail, AC coverage, keyboard tabs, draft body/evidence editing, preview, save and submit |
+| Board | Board/list views, search/filter/sort, work preview drawer. Filters persist in the URL and are restored when returning from details |
+| Work item | Chain, audit trail, AC coverage, keyboard tabs, draft body/evidence editing, Markdown formatting, preview, save and submit |
 | Branch check | Choose a comparison ref, inspect risk and CI gates, retry errors |
 | Incidents | Control band breaches and follow-up intents, search and status filters |
 | Improvement loop | Ledger, prevention rate and controls, search and status/detector filters |
 
 Overview counts and stage links open a filtered board. New work opens its intent editor.
+Use **Quick switch** or **Ctrl/⌘ K** to search work and screens, then use arrow keys and Enter to open a result.
+**Preview** on the board opens a read-only drawer; Escape returns focus to the same item.
+Select text in a draft to format headings, bold, lists, checklists or code. **Ctrl/⌘ S** saves changes.
 Write the body and evidence, **Save changes**, then **Submit**. Unsaved inputs survive tab,
 language and in-app refresh changes; leaving asks for confirmation. An external file change
 blocks saving and preserves your input. Loading the latest file asks before discarding input.

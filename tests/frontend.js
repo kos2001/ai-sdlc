@@ -80,6 +80,90 @@ async function main() {
       assert.equal(await count(".wcard"), 3);
     });
 
+    await check("W-0005:AC-1 W-0005:AC-5 preview drawer and filtered board return", async () => {
+      await go("/board?q=refund&stage=spec&tier=T3&view=list&sort=title");
+      const boardHash = await page.evaluate(() => location.hash);
+      const preview = page.getByRole("button", { name: "Preview W-0002", exact: true });
+      await preview.click();
+      await page.locator("#peek-title").filter({ hasText: "Refund" }).waitFor();
+      assert.equal(await count("#peek-dialog .peek-chain > div"), 2);
+      assert.equal(await count("#peek-dialog textarea, #peek-dialog [data-act]"), 0);
+      await page.keyboard.press("Tab");
+      assert.equal(await page.locator("#peek-content").evaluate((el) => el === document.activeElement), true);
+      assert.equal(await page.evaluate(() => location.hash), boardHash);
+      await page.keyboard.press("Escape");
+      assert.equal(await preview.evaluate((el) => el === document.activeElement), true);
+      await preview.click(); await page.locator("#peek-actions a").waitFor();
+      await page.getByRole("link", { name: "Open details", exact: true }).click(); await ready();
+      assert.equal(await page.locator("#peek-dialog").isVisible(), false);
+      await page.locator("#tab-spec").click(); await page.reload(); await ready();
+      assert.equal(await page.locator(".back-link").getAttribute("href"), boardHash);
+      await page.locator(".back-link").click(); await ready();
+      assert.equal(await page.evaluate(() => location.hash), boardHash);
+      assert.equal(await count("#board-results tbody tr"), 1);
+      assert.equal(await page.locator("#filter-q").inputValue(), "refund");
+      assert.equal(await page.locator("#filter-sort").inputValue(), "title");
+    });
+
+    await check("W-0005:AC-1 W-0005:AC-5 W-0005:AC-7 quick switch keyboard, search and retry", async () => {
+      await page.keyboard.press("Control+k");
+      await page.waitForFunction(() => !document.querySelector("#quick-results").hasAttribute("aria-busy"));
+      assert.equal(await page.locator("#quick-input").evaluate((el) => el === document.activeElement), true);
+      assert.equal(await page.locator("#quick-input").getAttribute("aria-activedescendant"), "quick-choice-0");
+      await page.keyboard.press("ArrowDown");
+      assert.equal(await page.locator("#quick-input").getAttribute("aria-activedescendant"), "quick-choice-1");
+      await page.keyboard.press("ArrowUp");
+      await page.locator("#quick-input").fill("W-0001");
+      assert.equal(await count("#quick-results [role=option]"), 1);
+      await page.keyboard.press("Enter"); await ready();
+      assert.match(page.url(), /work\/W-0001/);
+      await page.locator(".back-link").click(); await ready();
+      assert.equal(await page.locator("#filter-q").inputValue(), "refund");
+      await page.locator("#quick-open").click();
+      await page.locator("#quick-input").fill("not a work item");
+      assert.equal(await count("#quick-results [role=option]"), 0);
+      assert.equal(await page.locator("#quick-input").getAttribute("aria-activedescendant"), null);
+      await page.keyboard.press("Enter");
+      assert.equal(await page.locator("#quick-dialog").isVisible(), true);
+      await page.keyboard.press("Escape");
+      assert.equal(await page.locator("#quick-open").evaluate((el) => el === document.activeElement), true);
+      await page.route("**/api/work", (route) => route.fulfill({ status: 503, contentType: "application/json", body: '{"error":"Switch unavailable"}' }));
+      await page.locator("#quick-open").click();
+      await page.locator("#quick-error").waitFor({ state: "visible" });
+      await page.locator("#quick-input").fill("W-0002");
+      await page.unroute("**/api/work");
+      await page.locator("#quick-dialog [data-retry]").click();
+      await page.locator("#quick-results [role=option]").waitFor();
+      assert.match(await text("#quick-results"), /W-0002/);
+      assert.equal(await page.locator("#quick-input").inputValue(), "W-0002");
+      await page.locator("#quick-input").fill("Incidents");
+      await page.keyboard.press("Enter"); await ready();
+      assert.equal(await text("#title"), "Incidents");
+    });
+
+    await check("W-0005:AC-7 preview failure retry and stale drawer response", async () => {
+      await go("/board");
+      await page.route("**/api/work/W-0002", (route) => route.fulfill({ status: 503, contentType: "application/json", body: '{"error":"Preview unavailable"}' }));
+      await page.locator('[data-peek="W-0002"]').click();
+      await page.locator("#peek-content [role=alert]").waitFor();
+      await page.unroute("**/api/work/W-0002");
+      await page.locator("#peek-content [data-retry]").click();
+      await page.locator("#peek-title").filter({ hasText: "Refund" }).waitFor();
+      await page.keyboard.press("Escape");
+      let release; const gate = new Promise((resolve) => { release = resolve; });
+      await page.route("**/api/work/W-0002", async (route) => { await gate; await route.continue(); });
+      const sent = page.waitForRequest((r) => r.url().endsWith("/api/work/W-0002"));
+      await page.locator('[data-peek="W-0002"]').click(); await sent;
+      await page.keyboard.press("Escape");
+      await page.locator('[data-peek="W-0001"]').click();
+      await page.locator("#peek-title").filter({ hasText: "W-0001 ·" }).waitFor();
+      const finished = page.waitForResponse((r) => r.url().endsWith("/api/work/W-0002"));
+      release(); await (await finished).finished();
+      assert.match(await text("#peek-title"), /W-0001 ·/);
+      assert.doesNotMatch(await text("#peek-content"), /Refund/);
+      await page.unroute("**/api/work/W-0002"); await page.keyboard.press("Escape");
+    });
+
     await check("W-0005:AC-7 duplicate creation and failed request recovery", async () => {
       await page.locator("#new-work").click();
       await page.locator("#nf-title").fill("Browser draft");
@@ -108,6 +192,53 @@ async function main() {
       workId = page.url().match(/work\/(W-\d+)/)[1];
       draftFile = path.join(repo, (await getWork(workId)).chain.intent.path);
       await page.unroute("**/api/work");
+    });
+
+    await check("W-0005:AC-2 W-0005:AC-5 W-0005:AC-7 formatting and keyboard save keep draft guards", async () => {
+      await nav("board");
+      await page.locator("#filter-q").fill(workId);
+      await page.locator(`[data-peek="${workId}"]`).click();
+      await page.getByRole("link", { name: "Edit draft", exact: true }).waitFor();
+      await page.getByRole("link", { name: "Edit draft", exact: true }).click(); await ready();
+      assert.equal(await page.locator("#tab-intent").getAttribute("aria-selected"), "true");
+      const input = page.locator("#draft-body");
+      const select = (start, end) => input.evaluate((el, range) => el.setSelectionRange(...range), [start, end]);
+      await input.fill("Alpha\nBeta"); await select(0, 5);
+      await page.locator('[data-format="bold"]').click();
+      assert.equal(await input.inputValue(), "**Alpha**\nBeta");
+      assert.equal(await text("#draft-preview b"), "Alpha");
+      await select(10, 14); await page.locator('[data-format="heading"]').click();
+      assert.equal(await text("#draft-preview h2"), "Beta");
+      await page.locator('[data-format="list"]').click();
+      assert.equal(await input.inputValue(), "**Alpha**\n- Beta");
+      await page.locator('[data-format="task"]').click();
+      assert.equal(await input.inputValue(), "**Alpha**\n- [ ] Beta");
+      await input.fill("Alpha\nBeta"); await select(0, 6);
+      await page.locator('[data-format="heading"]').click();
+      assert.equal(await input.inputValue(), "## Alpha\nBeta", "line boundary keeps the next line unchanged");
+      await input.fill("\nBeta"); await select(0, 0);
+      await page.locator('[data-format="list"]').click();
+      assert.equal(await input.inputValue(), "- Text\nBeta", "empty first line stays the target");
+      await input.fill("Alpha\n<script>alert(1)</script>"); await select(0, 29);
+      await page.locator('[data-format="code"]').click();
+      assert.match(await text("#draft-preview pre"), /<script>/);
+      assert.equal(await count("#draft-preview script"), 0);
+      const dialog = page.waitForEvent("dialog");
+      await page.keyboard.press("Control+k"); await page.locator("#quick-input").fill("Incidents");
+      const navigate = page.locator("#quick-input").press("Enter");
+      await (await dialog).dismiss(); await navigate;
+      assert.match(page.url(), new RegExp(`work/${workId}`));
+      assert.match(await input.inputValue(), /<script>/);
+      let release; const gate = new Promise((resolve) => { release = resolve; }); let requests = 0;
+      await page.route(`**/api/work/${workId}/draft`, async (route) => { requests++; await gate; await route.continue(); });
+      const sent = page.waitForRequest((r) => r.url().endsWith(`/${workId}/draft`));
+      await input.focus(); await page.keyboard.press("Control+s"); await sent;
+      await page.keyboard.press("Control+s");
+      assert.equal(await page.locator("#draft-save").isEnabled(), false);
+      release(); await page.locator("#draft-state").filter({ hasText: "Saved" }).waitFor(); await ready();
+      assert.equal(requests, 1);
+      await page.unroute(`**/api/work/${workId}/draft`);
+      assert.match((await getWork(workId)).chain.intent.body, /<script>/);
     });
 
     await check("W-0005:AC-2 W-0005:AC-4 W-0005:AC-5 editing, safe preview, tabs and unsaved guards", async () => {
@@ -261,7 +392,7 @@ async function main() {
       assert.equal((await post(`/api/work/${created.id}/draft`, { stage: "intent", body: payload,
         sources: [{ kind: "ticket", ref: "RESPONSIVE-1" }], revision: editable.chain.intent.revision })).status(), 200);
       for (const width of [375, 1440]) for (const lang of ["ko", "en"]) for (const scheme of ["light", "dark"]) {
-        await page.setViewportSize({ width, height: 1000 });
+        await page.setViewportSize({ width, height: width === 375 ? 812 : 1000 });
         await page.emulateMedia({ colorScheme: scheme, reducedMotion: "reduce" });
         for (const route of ["/", "/intro", "/board", `/work/${workId}`, `/work/${created.id}?tab=intent`, "/branch", "/incidents", "/lessons"]) {
           await go(route, lang);
@@ -271,7 +402,26 @@ async function main() {
         }
         await go("/board", lang);
         await page.screenshot({ path: path.join(output, `board-${width}-${lang}-${scheme}.png`), fullPage: true });
+        await page.locator('[data-peek="W-0002"]').click();
+        await page.locator("#peek-actions a").waitFor();
+        assert.equal(await page.locator("#peek-dialog").evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight;
+        }), true, `preview dialog fits ${width} ${lang} ${scheme}`);
+        assert.doesNotMatch(await text("#peek-dialog"), /\b(peek|quick)\.[A-Za-z]+/);
+        await page.screenshot({ path: path.join(output, `preview-${width}-${lang}-${scheme}.png`), fullPage: true });
+        await page.keyboard.press("Escape");
+        await page.locator("#quick-open").click();
+        await page.waitForFunction(() => !document.querySelector("#quick-results").hasAttribute("aria-busy"));
+        assert.equal(await page.locator("#quick-dialog").evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight;
+        }), true, `quick dialog fits ${width} ${lang} ${scheme}`);
+        assert.doesNotMatch(await text("#quick-dialog"), /\bquick\.[A-Za-z]+/);
+        await page.screenshot({ path: path.join(output, `quick-${width}-${lang}-${scheme}.png`), fullPage: true });
+        await page.keyboard.press("Escape");
         await go(`/work/${created.id}?tab=intent`, lang);
+        assert.equal(await page.locator(".editor-actions").evaluate((el) => el.getBoundingClientRect().top >= document.querySelector(".source-set").getBoundingClientRect().bottom), true, "save controls do not cover evidence fields");
         await page.screenshot({ path: path.join(output, `editor-${width}-${lang}-${scheme}.png`), fullPage: true });
       }
       await page.setViewportSize({ width: 1440, height: 1000 });

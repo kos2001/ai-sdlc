@@ -75,6 +75,14 @@ const App = (() => {
   let activeHash = "", guard = null;
   const setGuard = (fn) => { guard = fn; };
   const query = () => new URLSearchParams(location.hash.split("?")[1] || "");
+  function workHref(id, tab = "") {
+    const params = new URLSearchParams();
+    if (tab) params.set("tab", tab);
+    const path = location.hash.slice(1);
+    const back = /^\/board(?:\?|$)/.test(path) ? path : query().get("back");
+    if (back && /^\/board(?:\?|$)/.test(back)) params.set("back", back);
+    return `#/work/${id}${params.size ? `?${params}` : ""}`;
+  }
   function updateQuery(values, replace = false) {
     const params = query();
     for (const [key, value] of Object.entries(values)) {
@@ -92,6 +100,7 @@ const App = (() => {
       return;
     }
     guard = null;
+    window.dispatchEvent(new Event("viewchange"));
     activeHash = `#${hash}`;
     const r = routes.find((x) => x.re.test(path)) || routes[0];
     document.querySelectorAll(".nav a").forEach((a) => {
@@ -173,5 +182,5 @@ const App = (() => {
     render();
   });
 
-  return { $, esc, t, api, toast, route, render, setTitle, loadRepo, markdown, statusChip, tierChip, cmdBlock, when, stageName, ROLE, query, updateQuery, setGuard };
+  return { $, esc, t, api, toast, route, render, setTitle, loadRepo, markdown, statusChip, tierChip, cmdBlock, when, stageName, ROLE, query, updateQuery, setGuard, workHref };
 })();
