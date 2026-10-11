@@ -231,6 +231,15 @@ reviews and measurements found the rest after the fact. Read current figures and
 python3 -m sdlc --root <repo> serve        # http://127.0.0.1:8791/  (한국어 / English)
 ```
 
+### Screens (from the sample repository built by `python3 -m sdlc demo`)
+
+| | |
+|---|---|
+| ![Overview](docs/img/overview.png) | ![Board](docs/img/board.png) |
+| Overview: work in progress, gates waiting on a person, median gate wait, approval commands to copy | Board: kanban by stage, search, filter and sort, saved views, favorites |
+| ![Work item](docs/img/work-item.png) | ![Improvement loop](docs/img/improvement-loop.png) |
+| Work item: the intent → spec → plan chain, approvals, AC coverage, audit trail rebuilt from git | Improvement loop: the lessons ledger, share caught first by an existing gate, controls still in place |
+
 | Screen | Contents |
 |---|---|
 | Intro | What changes from the traditional SDLC — at a glance, stage by stage, who does what, live cards from this repository, FAQ |

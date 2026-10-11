@@ -230,6 +230,15 @@ python3 -m sdlc lessons status
 python3 -m sdlc --root <저장소> serve        # http://127.0.0.1:8791/  (한국어 / English)
 ```
 
+### 화면 (샘플 저장소 `python3 -m sdlc demo` 기준)
+
+| | |
+|---|---|
+| ![개요](docs/img/overview.png) | ![보드](docs/img/board.png) |
+| 개요: 진행 중 작업, 사람을 기다리는 게이트, 게이트 대기 중앙값, 승인 명령 복사 | 보드: 단계별 칸반, 검색·필터·정렬, 저장된 보기, 즐겨찾기 |
+| ![작업 항목](docs/img/work-item.png) | ![개선 루프](docs/img/improvement-loop.png) |
+| 작업 항목: intent → spec → plan 체인, 승인 현황, AC 추적, git 기반 감사 추적 | 개선 루프: 교훈 장부, 기존 게이트가 먼저 잡은 비율, 유지 중인 통제 |
+
 | 화면 | 내용 |
 |---|---|
 | 소개 | 전통 SDLC와 무엇이 다른가 — 한눈에 보는 차이, 단계별 변화, 누가 무엇을, 이 저장소의 실데이터 카드, FAQ |
