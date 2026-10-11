@@ -5,29 +5,58 @@
   const HUE = { intent: "plan", spec: "design", plan: "build" };
   const isAgent = (who) => /claude|anthropic|\[bot\]/i.test(who || "");
 
-  route(/^\/work\/(W-\d{4,})$/, "board", async (view, m) => {
+  route(/^\/work\/(W-\d{4,})$/, "board", async (view, m, params) => {
+    App.setGuard((path) => Editor.canLeave(m[1], path));
     const w = await api(`/api/work/${m[1]}`);
+    if (!view.isConnected) return;
     setTitle(`${w.id} · ${stageName(w.stage)}`, w.title);
     view.innerHTML = `
-      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,max-content));gap:8px">
+      <a class="back-link" href="#/board">${esc(t("ui.back"))}</a>
+      <div class="work-meta">
         ${tierChip(w.tier)}<span class="chip">${esc(t("wd.owner", { o: w.owner || "—" }))}</span>${w.origin === "maintain-loop" ? `<span class="chip gate">${esc(t("wd.loop"))}</span>` : ""}
       </div>
       <div class="chain" style="margin-top:16px">${KINDS.map((k, i) => link(w, k, i)).join("")}</div>
       ${w.trace.criteria.length ? `<div class="section"><h2>${esc(t("wd.traceH"))}</h2><div class="card" style="display:flex;gap:8px;flex-wrap:wrap">
         ${w.trace.criteria.map((ac) => `<span class="chip ${w.trace.covered.includes(ac) ? "ok" : "bad"}">${w.trace.covered.includes(ac) ? "✓" : "✗"} ${esc(w.id)}:${esc(ac)}</span>`).join("")}
         <span class="fine" style="align-self:center">${esc(t("wd.traceNote"))}</span></div></div>` : ""}
-      <div class="tabs" role="tablist">
-        <button role="tab" type="button" data-tab="audit" aria-selected="true">${esc(t("wd.audit"))}</button>
-        ${KINDS.filter((k) => w.chain[k]).map((k) => `<button role="tab" type="button" style="--c:var(--st-${HUE[k]})" data-tab="${k}" aria-selected="false">${k}.md</button>`).join("")}
+      <div class="tabs" role="tablist" aria-label="${esc(t("ui.selectTab"))}">
+        <button id="tab-audit" role="tab" type="button" data-tab="audit" aria-controls="tab-body" aria-selected="true">${esc(t("wd.audit"))}</button>
+        ${KINDS.filter((k) => w.chain[k]).map((k) => `<button id="tab-${k}" role="tab" type="button" style="--c:var(--st-${HUE[k]})" data-tab="${k}" aria-controls="tab-body" aria-selected="false" tabindex="-1">${k}.md</button>`).join("")}
       </div>
-      <div id="tab-body"></div>`;
+      <div id="tab-body" role="tabpanel" tabindex="0"></div>`;
+    const tabs = [...view.querySelectorAll("[data-tab]")];
+    const panel = $("#tab-body", view);
     const show = (tab) => {
-      view.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
-      $("#tab-body").innerHTML = tab === "audit" ? audit(w) : doc(w.chain[tab]);
+      if (Editor.pending(w.id)) { toast(t("ui.busy")); return; }
+      if (!tabs.some((b) => b.dataset.tab === tab)) tab = "audit";
+      tabs.forEach((b) => { b.setAttribute("aria-selected", String(b.dataset.tab === tab)); b.tabIndex = b.dataset.tab === tab ? 0 : -1; });
+      panel.setAttribute("aria-labelledby", `tab-${tab}`);
+      App.updateQuery({ tab: tab === "audit" ? "" : tab }, true);
+      if (tab !== "audit" && w.chain[tab].status === "draft") Editor.mount(panel, w, tab);
+      else panel.innerHTML = tab === "audit" ? audit(w) : `<p class="fine">${esc(t("ui.readNote"))}</p>${doc(w.chain[tab])}`;
     };
-    view.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => show(b.dataset.tab)));
-    view.querySelectorAll("[data-act]").forEach((b) => (b.onclick = () => act(w, b)));
-    show("audit");
+    tabs.forEach((b, i) => {
+      b.onclick = () => show(b.dataset.tab);
+      b.onkeydown = (e) => {
+        const dest = { ArrowRight: (i + 1) % tabs.length, ArrowLeft: (i + tabs.length - 1) % tabs.length, Home: 0, End: tabs.length - 1 }[e.key];
+        if (dest === undefined) return;
+        e.preventDefault();
+        if (Editor.pending(w.id)) return;
+        show(tabs[dest].dataset.tab); tabs[dest].focus();
+      };
+    });
+    let busy = false;
+    view.querySelectorAll("[data-act]").forEach((b) => (b.onclick = async () => {
+      if (busy || Editor.pending(w.id)) { toast(t("ui.busy")); return; }
+      if (Editor.dirty(w.id)) { toast(t("ui.saveFirst")); return; }
+      busy = true;
+      view.querySelectorAll("[data-act]").forEach((button) => (button.disabled = true));
+      await act(w, b, view);
+      busy = false;
+      view.querySelectorAll("[data-act]").forEach((button) => (button.disabled = false));
+    }));
+    App.setGuard((path) => { if (busy) { toast(t("ui.busy")); return false; } return Editor.canLeave(w.id, path); });
+    show(params.get("tab") || "audit");
   });
 
   function link(w, kind, i) {
@@ -64,7 +93,7 @@
     return `<div class="doc"><div class="front">${esc(front)}</div>${markdown(a.body)}<p class="fine"><code>${esc(a.path)}</code> — ${esc(t("wd.docNote"))}</p></div>`;
   }
 
-  async function act(w, btn) {
+  async function act(w, btn, view) {
     btn.disabled = true;
     const kind = btn.dataset.kind;
     try {
@@ -75,7 +104,8 @@
         await api(`/api/work/${w.id}/submit`, { stage: kind });
         toast(t("wd.submitted", { id: w.id, kind }));
       }
-      App.render();
+      Editor.forget(w.id);
+      if (view.isConnected) { App.setGuard(null); App.render("mutation"); }
     } catch (err) {
       toast(t("wd.failed", { msg: err.message }));
       btn.disabled = false;
