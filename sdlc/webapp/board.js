@@ -66,12 +66,13 @@
   function card(w) {
     const a = current(w), tr = w.trace;
     const pct = tr.criteria.length ? tr.covered.length / tr.criteria.length * 100 : 0;
-    return `<a class="wcard" href="#/work/${esc(w.id)}"><span class="id">${esc(w.id)}${w.origin === "maintain-loop" ? ` · ${esc(t("bd.loop"))}` : ""}</span>
+    return `<article class="wcard"><a class="wcard-main" href="${esc(App.workHref(w.id))}"><span class="id">${esc(w.id)}${w.origin === "maintain-loop" ? ` · ${esc(t("bd.loop"))}` : ""}</span>
       <span class="t">${esc(w.title)}</span><span class="meta">${tierChip(w.tier)}${a ? statusChip(a.status) : ""}${w.issues ? `<span class="chip bad">${esc(t("bd.issues", { n: w.issues }))}</span>` : ""}</span>
       <span class="fine owner">${esc(w.owner || "—")}</span>${a?.status === "proposed" ? `<span class="fine">${esc(t("bd.approvals", { have: a.approvals.length, need: a.needed }))}</span>` : ""}
-      ${tr.criteria.length ? `<span class="fine">${esc(t("bd.ac", { c: tr.covered.length, n: tr.criteria.length }))}</span><span class="bar"><i style="width:${pct}%"></i></span>` : ""}</a>`;
+      ${tr.criteria.length ? `<span class="fine">${esc(t("bd.ac", { c: tr.covered.length, n: tr.criteria.length }))}</span><span class="bar"><i style="width:${pct}%"></i></span>` : ""}</a>
+      <button class="btn small peek-trigger" type="button" data-peek="${esc(w.id)}" aria-label="${esc(t("peek.work", { id: w.id }))}">${esc(t("peek.label"))}<span aria-hidden="true">↗</span></button></article>`;
   }
   function list(items) {
-    return `<div class="table-wrap"><table><thead><tr>${["col.work", "ui.stage", "col.tier", "col.status", "new.owner"].map((k) => `<th scope="col">${esc(t(k))}</th>`).join("")}</tr></thead><tbody>${items.map((w) => `<tr><td><a href="#/work/${esc(w.id)}"><span class="mono">${esc(w.id)}</span> ${esc(w.title)}</a></td><td>${esc(stageName(w.stage))}</td><td>${tierChip(w.tier)}</td><td>${current(w) ? statusChip(current(w).status) : "—"}</td><td>${esc(w.owner || "—")}</td></tr>`).join("")}</tbody></table></div>`;
+    return `<div class="table-wrap"><table><thead><tr>${["col.work", "ui.stage", "col.tier", "col.status", "new.owner", "peek.label"].map((k) => `<th scope="col">${esc(t(k))}</th>`).join("")}</tr></thead><tbody>${items.map((w) => `<tr><td><a href="${esc(App.workHref(w.id))}"><span class="mono">${esc(w.id)}</span> ${esc(w.title)}</a></td><td>${esc(stageName(w.stage))}</td><td>${tierChip(w.tier)}</td><td>${current(w) ? statusChip(current(w).status) : "—"}</td><td>${esc(w.owner || "—")}</td><td><button class="btn small" type="button" data-peek="${esc(w.id)}" aria-label="${esc(t("peek.work", { id: w.id }))}">${esc(t("peek.label"))}</button></td></tr>`).join("")}</tbody></table></div>`;
   }
 })();

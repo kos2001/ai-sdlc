@@ -62,3 +62,29 @@ draft 엔드포인트를 추가한다. demo에서 검증한 다음 실제 저장
 - `python3 -m sdlc trace W-0005 --strict`: 8/8 criteria traced.
 - Browser tests: `tests/frontend.js`; API tests: `tests/test_drafts.py`.
 - 실 저장소 조회: http://127.0.0.1:8791/ (최종 읽기 검증).
+
+## Follow-up interaction refinement
+사용자가 같은 프론트엔드 개선을 다시 요청하여, 승인된 R1/R2/R3/R5/R8의
+탐색·편집 동작을 확장한다. API와 게이트 상태는 변경하지 않는다.
+
+- 작업/화면 빠른 이동 dialog: Ctrl/⌘ K, 검색, 방향키·Enter·Escape, 오류 재시도.
+- 보드/목록의 읽기 전용 작업 미리보기: 체인·현재 본문·추적 요약, 상세/편집 연결.
+- 보드 조건을 상세 URL에 전달하여 상세에서 돌아올 때 같은 필터·정렬·보기 복원.
+- 초안 Markdown 서식 도구와 Ctrl/⌘ S 저장: 기존 변경 버퍼·충돌·중복 저장 보호 사용.
+
+AC-1/AC-5/AC-7/AC-8에 실제 브라우저 검증을 추가한다. 새 dialog는 작은 화면과
+두 언어/테마에서 검증하고, 미저장 편집 이탈과 지연 응답을 회귀 검증한다.
+
+### Follow-up evidence
+- [x] 빠른 이동의 검색·방향키·Enter·Escape와 오류 재시도를 검증했다.
+- [x] 미리보기 닫기의 초점 복귀·본문 키보드 초점·지연 응답 격리, 초안 편집 연결과 보드 조건 복원을 검증했다.
+- [x] 서식 적용의 선택 범위, Ctrl/⌘ S 중복 저장 보호, 빠른 이동에서 미저장 이탈 거절을 검증했다.
+- [x] `make check`: 100 tests passed, artifacts and 18 lesson controls validated.
+- [x] 브라우저 11개 회귀 검증 그룹: 375×812/1440×1000, ko/en, light/dark, reduced-motion 통과.
+- [x] 실 서버 읽기 검증: 데스크톱 미리보기·모바일 Meta-K 검색/상세 이동, POST 0건·JS 오류 0건.
+- [x] UI 캡처 검토 후 저장 버튼의 근거 입력 가림을 수정하고 회귀 검증을 추가했다.
+- [x] `trace W-0005 --strict`: 8/8; JS syntax and source sizes, `git diff --check` passed.
+
+후속 검증 로그: `/private/tmp/ai-sdlc-interaction-check.log`,
+`/private/tmp/ai-sdlc-interaction-unit.log`, `/private/tmp/ai-sdlc-interaction-live.log`.
+스크린샷: `/private/tmp/ai-sdlc-frontend-qa/` (미리보기·빠른 이동·편집 화면).
