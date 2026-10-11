@@ -23,7 +23,11 @@ def main():
         threading.Thread(target=httpd.serve_forever, daemon=True).start()
         try:
             base = f"http://127.0.0.1:{httpd.server_address[1]}"
-            return subprocess.run(["node", str(ROOT / "tests/frontend.js"), base, str(root)], cwd=ROOT).returncode
+            for suite in ("frontend.js", "discovery.js"):
+                result = subprocess.run(["node", str(ROOT / "tests" / suite), base, str(root)], cwd=ROOT)
+                if result.returncode:
+                    return result.returncode
+            return 0
         finally:
             httpd.shutdown()
             httpd.server_close()

@@ -5,7 +5,10 @@
 <p align="center"><b>코드가 병목이 아니게 된 뒤의 소프트웨어 개발 수명주기.</b><br>
 일은 에이전트가, 결정은 사람이, 규칙은 도구가 맡습니다.</p>
 
-<p align="center">한국어 · <a href="README.en.md">English</a></p>
+<p align="center"><strong lang="ko">한국어</strong> · <a href="README.en.md" lang="en">English</a></p>
+
+이 README는 한국어와 [English](README.en.md)로 제공됩니다. 두 버전 모두 설치, 사용법,
+기능, API, 개발·검증 안내를 포함하며 변경 시 함께 갱신합니다.
 
 ---
 
@@ -232,7 +235,7 @@ python3 -m sdlc --root <저장소> serve        # http://127.0.0.1:8791/  (한�
 | 소개 | 전통 SDLC와 무엇이 다른가 — 한눈에 보는 차이, 단계별 변화, 누가 무엇을, 이 저장소의 실데이터 카드, FAQ |
 | 가이드 | 전체 이야기 (`web/index.html`) 를 앱 안에서 |
 | 개요 | 진행 중인 작업, 사람을 기다리는 게이트, 게이트 대기 중앙값(git), AC 추적, 열린 인시던트, 복사할 승인 명령 |
-| 작업 보드 | 칸반/목록, 검색·필터·정렬, 상세로 이동하지 않는 작업 미리보기. 조건은 URL에 보존하며 상세에서 돌아오면 복원 |
+| 작업 보드 | 칸반/목록, 필드 검색·필터·정렬, 이름 있는 보기 저장·갱신·공유, 즐겨찾기·최근 작업, 읽기 전용 미리보기 |
 | 작업 상세 | 체인·감사 기록·AC 추적, 키보드 상세 탭, 초안 본문·근거 편집, Markdown 서식 도구와 미리보기·저장·제출 |
 | 브랜치 점검 | 비교 기준 ref 선택, 위험 등급과 원인 파일, CI와 같은 게이트, 오류 재시도 |
 | 인시던트 | control band 이탈과 후속 의도, 검색·상태 필터 |
@@ -241,7 +244,17 @@ python3 -m sdlc --root <저장소> serve        # http://127.0.0.1:8791/  (한�
 개요의 작업 수와 단계 링크를 클릭하면 해당 조건의 보드로 이동합니다. 새 작업을 만들면
 의도 편집 탭이 열립니다. 본문과 근거를 작성하고 **변경 저장** 후 **제출**하세요.
 상단 **빠른 이동** 또는 **Ctrl/⌘ K**로 작업과 화면을 검색하고 방향키·Enter로 이동합니다.
+즐겨찾기·최근 작업이 먼저 나타나며, 저장된 보기 이름으로도 검색할 수 있습니다.
+보드의 **새 보기 저장**은 검색·필터·정렬·보기 방식을 보관합니다. 조건 변경 후에는
+**현재 조건 저장**으로 갱신합니다. **조건 링크 복사**는 개인 보기 ID 없이 실제 조건을 공유합니다.
+작업의 별표는 개인 즐겨찾기를 토글합니다. 개인 보기·즐겨찾기·최근 ID는 같은 브라우저와
+저장소에만 보관되며, 저장소를 다른 경로로 이동하면 별도 설정 공간으로 시작합니다.
+브라우저 저장이 차단되거나 가득 차면 안내와 함께 현재 탭에서만 유지합니다.
+검색 예: `stage:spec tier:T3 owner:"Dana Park"`, `stage:spec,done -tier:T1`, `is:favorite`.
+필드 조건은 AND, 쉼표 값은 OR로 묶입니다. `is:waiting`, `is:issues`, `is:untraced`, `is:recent`, `is:draft`도 지원하며
+검색식 도움말에서 확인할 수 있습니다. 입력 오류는 결과 위에 표시합니다.
 보드의 **미리보기**는 읽기 패널을 열고, Escape로 닫으면 같은 위치로 돌아옵니다.
+보드 조건은 URL에 보존하며 상세 화면에서 돌아오면 복원합니다.
 초안에서 텍스트를 선택해 제목·굵게·목록·체크리스트·코드 서식을 적용하고 **Ctrl/⌘ S**로 저장할 수 있습니다.
 편집 중 탭·언어 전환과 앱 내 새로고침은 입력을 유지하며, 화면 이탈에는 확인을 요청합니다.
 다른 편집기에서 파일이 바뀌면 저장을 거절하고 입력을 유지합니다. 최신 파일 불러오기는
@@ -251,7 +264,7 @@ python3 -m sdlc --root <저장소> serve        # http://127.0.0.1:8791/  (한�
 
 | 메서드 | 경로 | 설명 |
 |---|---|---|
-| GET | `/api/overview` | 요약 지표와 승인 대기 목록 |
+| GET | `/api/overview` | 요약 지표, 승인 대기 목록, 개인 설정 격리용 workspace_id(저장소 경로의 SHA-256) |
 | GET | `/api/work`, `/api/work/W-NNNN` | 작업 목록 / 상세(본문·감사 기록 포함) |
 | GET | `/api/branch?base=REF` | 위험 등급, 게이트 결과, 이벤트 |
 | GET | `/api/incidents` | 인시던트 |
@@ -333,7 +346,7 @@ bands/                control band 정의 예시
 lessons/ledger.json   교훈 원장
 scripts/make_icons.py 아이콘 생성
 docs/                 design/ 설계서 · adoption/ 도입 사례 · patches/ 적용 대기 패치
-tests/                Python unittest + frontend.js 브라우저 회귀 검증
+tests/                Python unittest + frontend.js · discovery.js 브라우저 회귀 검증
 ```
 
 ## 개발
@@ -354,7 +367,8 @@ export SDLC_CHROMIUM=/absolute/path/to/chromium
 python3 scripts/check_frontend.py
 ```
 
-보드 탐색, 생성→편집→저장→제출, 동시·실패·지연 응답, 저장 충돌, 키보드 탭과
+보드 탐색, 보기 저장·공유, 즐겨찾기·최근 작업, 필드 검색, 브라우저 저장 실패·저장소 격리,
+생성→편집→저장→제출, 동시·실패·지연 응답, 저장 충돌, 키보드 탭과
 375px/데스크톱 × 한국어/영어 × 밝은/어두운 화면을 검증합니다.
 스크린샷은 기본 `/private/tmp/ai-sdlc-frontend-qa`에 저장하며 `SDLC_SCREENSHOTS`로 변경할 수 있습니다.
 
@@ -378,6 +392,7 @@ python3 scripts/check_frontend.py
 
 | 문서 | 내용 |
 |---|---|
+| [한국어 README](README.md) · [English README](README.en.md) | 설치·사용·기능·API·개발 안내 (한국어 / English) |
 | [`docs/design/ai-native-sdlc-design.md`](docs/design/ai-native-sdlc-design.md) | 설계서: 원칙, 아키텍처, 아티팩트 사양, 12개 플레이, 거버넌스, 로드맵, 구현 현황 |
 | [`docs/adoption/lls-kit.md`](docs/adoption/lls-kit.md) | 실제 저장소 도입 검토와 측정 |
 | [`CLAUDE.md`](CLAUDE.md) · [`REVIEW.md`](REVIEW.md) | 에이전트 운영 규칙 · 리뷰 정책 |
