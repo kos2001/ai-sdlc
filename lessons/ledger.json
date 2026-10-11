@@ -166,5 +166,69 @@
     "gate_existed": false,
     "status": "open",
     "control": null
+  },
+  {
+    "id": "L-012",
+    "title": "상세 담당자 chip이 모바일 화면 밖으로 넘쳤다",
+    "area": "sdlc/webapp/detail.js",
+    "detected_by": "test",
+    "detected_at": "2026-10-11",
+    "what_happened": "W-0005 browser regression: 375px Korean detail document.scrollWidth exceeded viewport; owner text overflowed its grid cell.",
+    "root_cause": "The inherited max-content metadata grid and nowrap chip did not allow a long owner identity to wrap.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/frontend.js::document.documentElement.scrollWidth <= window.innerWidth"
+    },
+    "closed_at": "2026-10-11"
+  },
+  {
+    "id": "L-013",
+    "title": "HTTP 새 작업 생성의 owner 입력에 frontmatter 줄바꿈 주입이 가능했다",
+    "area": "sdlc/server.py",
+    "detected_by": "review",
+    "detected_at": "2026-10-11",
+    "what_happened": "POST /api/work passed owner directly into the intent template; newline input could inject status and approval keys.",
+    "root_cause": "The API checked only nonempty values before substituting owner into quoted frontmatter.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/test_drafts.py::test_creation_owner_cannot_inject_gate_metadata"
+    },
+    "closed_at": "2026-10-11"
+  },
+  {
+    "id": "L-014",
+    "title": "개요 카드를 링크로 바꾸며 닫는 태그를 잘못 유지했다",
+    "area": "sdlc/webapp/views.js",
+    "detected_by": "review",
+    "detected_at": "2026-10-11",
+    "what_happened": "The active-work tile opened with an anchor and closed with div, breaking the overview tiles grid.",
+    "root_cause": "A text replacement changed the opening wrapper but missed its closing tag.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/frontend.js::count(\".tiles > .tile\")"
+    },
+    "closed_at": "2026-10-11"
+  },
+  {
+    "id": "L-015",
+    "title": "여러 AC를 축약해 표기하면 trace가 각 기준을 인식하지 못한다",
+    "area": "tests/frontend.js",
+    "detected_by": "gate",
+    "detected_at": "2026-10-11",
+    "what_happened": "The frontend test label W-0005:AC-2 AC-4 AC-5 exercised the behaviors but trace reported AC-5 missing; expanded each label to a full W-0005:AC-n tag.",
+    "root_cause": "Human-readable shorthand was mistaken for the trace scanner required full tag format.",
+    "gate_existed": true,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/test_lifecycle.py::test_full_chain_through_all_gates"
+    },
+    "closed_at": "2026-10-11"
   }
 ]

@@ -10,7 +10,7 @@ import datetime as dt
 import statistics
 from pathlib import Path
 
-from . import artifacts, events, gates, gitutil, policy, risk, trace
+from . import artifacts, drafts, events, gates, gitutil, policy, risk, trace
 
 STAGES = ("intent", "spec", "plan")
 SEP = "\x1f"
@@ -125,7 +125,9 @@ def work_item(root: Path, work_id: str) -> dict | None:
     for kind, summary in item["chain"].items():
         if not summary:
             continue
-        art = artifacts.load(root / summary["path"], root)
+        raw = (root / summary["path"]).read_bytes()
+        art = artifacts.load_text(raw.decode("utf-8"), summary["path"], root)
+        summary["revision"] = drafts.revision(raw)
         summary["body"] = art.body
         summary["meta"] = {k: v for k, v in art.meta.items() if k != "approvals"}
         summary["history"] = history(root, summary["path"])

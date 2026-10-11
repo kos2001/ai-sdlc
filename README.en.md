@@ -15,7 +15,7 @@ Every stage ends by **committing an artifact to Git**, and the next stage starts
 
 - Needs Python 3.11+ and git. No third-party packages (Pillow is optional, only for icon PNGs).
 - Parts: a CLI (`python3 -m sdlc`) · Claude Code hooks, skills, and subagents · GitHub Actions · a local web app · a product site.
-- 70 tests (`make check`), passing in GitHub Actions `ci`.
+- Python unit tests, artifact and lesson checks (`make check`), plus separate browser regressions.
 
 ## Contents
 
@@ -73,7 +73,7 @@ intent.md ──accept──▶ spec.md ──approve──▶ plan.md ──app
 
 ```bash
 git clone https://github.com/kos2001/ai-sdlc.git && cd ai-sdlc
-make check                                           # 70 tests + artifact validation
+make check                                           # unit tests + artifact and lesson checks
 
 # see the web app on a sample repository with every state (sample data)
 python3 -m sdlc demo /tmp/demo-shop
@@ -217,9 +217,10 @@ python3 -m sdlc lessons close L-013 --kind rule --rule "Re-measure over the full
 python3 -m sdlc lessons status
 ```
 
-This repository's ledger starts with the 11 mistakes actually made while building it. Nine are closed by a test or a
-rule; two (the hook's over-blocking) are still open. **An existing gate caught only 2 of 11 first (18%)** — people,
-reviews, and measurements found the rest after the fact. That share going up is the evidence the loop works.
+This repository's ledger started with 11 mistakes actually made while building it. At that point nine were closed
+by tests or rules and two were open. **An existing gate caught only 2 of those initial 11 first (18%)**; people,
+reviews and measurements found the rest after the fact. Read current figures and additional lessons with
+`python3 -m sdlc lessons status` or the Improvement loop screen.
 
 ## Web app
 
@@ -232,11 +233,17 @@ python3 -m sdlc --root <repo> serve        # http://127.0.0.1:8791/  (한국어 
 | Intro | What changes from the traditional SDLC — at a glance, stage by stage, who does what, live cards from this repository, FAQ |
 | Guide | The full story (`web/index.html`) inside the app |
 | Overview | Work in progress, gates waiting on people, median gate wait (from git), AC coverage, open incidents, approval commands to copy |
-| Board | Kanban: intent → spec → plan → build → done |
-| Work item | The chain and its approvals, an audit trail rebuilt from git (agent vs person), ✓/✗ per AC, artifact text |
-| Branch check | The current branch's tier and the files that set it, the same gates CI runs, plays that follow a merge |
-| Incidents | Control band breaches and their follow-up intents |
-| Improvement loop | The lessons ledger, prevention rate, who found them, control kinds, controls in place |
+| Board | Board/list views; search ID, title and owner; filter stage, tier, awaiting approval and validation issues; sort. Filters persist in the URL |
+| Work item | Chain, audit trail, AC coverage, keyboard tabs, draft body/evidence editing, preview, save and submit |
+| Branch check | Choose a comparison ref, inspect risk and CI gates, retry errors |
+| Incidents | Control band breaches and follow-up intents, search and status filters |
+| Improvement loop | Ledger, prevention rate and controls, search and status/detector filters |
+
+Overview counts and stage links open a filtered board. New work opens its intent editor.
+Write the body and evidence, **Save changes**, then **Submit**. Unsaved inputs survive tab,
+language and in-app refresh changes; leaving asks for confirmation. An external file change
+blocks saving and preserves your input. Loading the latest file asks before discarding input.
+Submitted artifacts are read-only. Human approvals use the existing CLI.
 
 **API** (all JSON)
 
@@ -248,12 +255,16 @@ python3 -m sdlc --root <repo> serve        # http://127.0.0.1:8791/  (한국어 
 | GET | `/api/incidents` | Incidents |
 | GET | `/api/lessons` | The lessons ledger and its measures |
 | POST | `/api/work` | Create a draft intent `{title, owner, tier}` |
+| POST | `/api/work/W-NNNN/draft` | Save draft `{stage, body, revision, sources?}`. Sources are intent-only. Detail responses contain revisions. Stale revisions/non-drafts return 409; invalid input returns 400 |
 | POST | `/api/work/W-NNNN/stage` | Draft the next stage `{stage}` |
 | POST | `/api/work/W-NNNN/submit` | Submit `{stage}` — gate violations return 409 |
 
 **Security model**: binds to 127.0.0.1 only; a non-loopback Host header gets 403 (blocks DNS rebinding); writes need
 `Content-Type: application/json` plus an `X-SDLC: 1` header; static files never leave the app folder.
 **There is deliberately no approve endpoint** — any local process, an agent included, could call an HTTP route.
+Draft editing preserves approval, status, tier, owner and other gate metadata. HTTP writes
+are serialized and files are atomically replaced. Revisions detect outside changes; there
+is no cross-process transaction lock with an external editor.
 
 ## CI/CD workflows
 
@@ -320,7 +331,7 @@ bands/                example control bands
 lessons/ledger.json   the lessons ledger
 scripts/make_icons.py icon generator
 docs/                 design/ design doc · adoption/ case study · patches/ pending patch
-tests/                70 unittest cases
+tests/                Python unittest + frontend.js browser regressions
 ```
 
 ## Development
@@ -330,6 +341,20 @@ make check                                  # unit tests + artifact validation +
 python3 -m unittest tests.test_server -v    # one module
 python3 scripts/make_icons.py [--png]       # regenerate icons (PNGs need Pillow)
 ```
+
+Browser checks use Node.js and a separately installed Playwright/Chromium. These are not
+product dependencies. The runner builds and cleans up an isolated temporary demo repository.
+
+```bash
+export SDLC_PLAYWRIGHT=/absolute/path/to/node_modules/playwright
+# Optional: use an already installed Chromium
+export SDLC_CHROMIUM=/absolute/path/to/chromium
+python3 scripts/check_frontend.py
+```
+
+Checks cover board navigation, create/edit/save/submit, concurrent/failed/delayed responses,
+save conflicts, keyboard tabs and 375px/desktop × Korean/English × light/dark rendering.
+Screenshots default to `/private/tmp/ai-sdlc-frontend-qa`; override with `SDLC_SCREENSHOTS`.
 
 - Standard library only; tests use `unittest`. Commands exit non-zero on violations.
 - Keep `sdlc/` files at 12 KB or less (repositories that copy this package may gate on input size).
