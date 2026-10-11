@@ -230,5 +230,53 @@
       "ref": "tests/test_lifecycle.py::test_full_chain_through_all_gates"
     },
     "closed_at": "2026-10-11"
+  },
+  {
+    "id": "L-016",
+    "title": "Quick-switch search consumed Escape before closing the dialog",
+    "area": "sdlc/webapp/quick.js",
+    "detected_by": "test",
+    "detected_at": "2026-10-11",
+    "what_happened": "Browser regression left focus in the search dialog after Escape with a non-empty search.",
+    "root_cause": "Native search-field Escape behavior was assumed to always trigger native dialog cancellation.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/frontend.js::page.locator(\"#quick-open\").evaluate((el) => el === document.activeElement)"
+    },
+    "closed_at": "2026-10-11"
+  },
+  {
+    "id": "L-017",
+    "title": "Sticky editor actions obscured evidence inputs",
+    "area": "sdlc/webapp/interactive.css",
+    "detected_by": "measurement",
+    "detected_at": "2026-10-11",
+    "what_happened": "The rendered desktop editor screenshot showed a floating save bar covering the evidence row.",
+    "root_cause": "Sticky bottom positioning moved controls over preceding form inputs while they were still in the viewport.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/frontend.js::save controls do not cover evidence fields"
+    },
+    "closed_at": "2026-10-11"
+  },
+  {
+    "id": "L-018",
+    "title": "Line formatting included the next line at a selection boundary",
+    "area": "sdlc/webapp/editor.js",
+    "detected_by": "review",
+    "detected_at": "2026-10-11",
+    "what_happened": "Review found that selecting a complete line including its trailing newline also formatted the next line, and a leading empty line used the wrong start offset.",
+    "root_cause": "Line ranges were expanded without treating exclusive selection endpoints and offset zero separately.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/frontend.js::line boundary keeps the next line unchanged"
+    },
+    "closed_at": "2026-10-11"
   }
 ]
