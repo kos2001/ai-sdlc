@@ -3,8 +3,8 @@
 Security model: binds to 127.0.0.1, answers only requests whose Host is that loopback
 address (blocks DNS rebinding), and accepts writes only as JSON with an X-SDLC header
 (a cross-site form cannot set it). Writes are limited to the steps an agent may take
-anyway — new, stage, submit. There is no approve endpoint: a gate decision is a person
-running `sdlc approve` in a terminal, and an HTTP route would let any local process,
+anyway — new, draft editing, stage, submit. There is no approve endpoint: a gate
+decision is a person running `sdlc approve` in a terminal, and an HTTP route would let any local process,
 including an agent, record one.
 """
 
@@ -14,16 +14,17 @@ import json
 import mimetypes
 import re
 import sys
+import threading
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from . import api, artifacts, gitutil, lessons, workitems
+from . import api, artifacts, drafts, gitutil, lessons, workitems
 
 APP_DIR = Path(__file__).parent / "webapp"
 SITE = Path(__file__).resolve().parent.parent / "web" / "index.html"
-WORK_ROUTE = re.compile(r"^/api/work/(W-\d{4,})(?:/(stage|submit))?$")
+WORK_ROUTE = re.compile(r"^/api/work/(W-\d{4,})(?:/(stage|submit|draft))?$")
 MAX_BODY = 64 * 1024
 
 
@@ -41,6 +42,8 @@ def _work_dir(root: Path, work_id: str) -> Path:
 
 
 def make_handler(root: Path, allowed_hosts: set[str]):
+    mutation_lock = threading.Lock()
+
     class Handler(BaseHTTPRequestHandler):
         server_version = "sdlc"
 
@@ -56,7 +59,10 @@ def make_handler(root: Path, allowed_hosts: set[str]):
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Referrer-Policy", "no-referrer")
             self.end_headers()
-            self.wfile.write(body)
+            try:
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                pass  # a browser can navigate away while a read is still running
 
         def _json(self, status: HTTPStatus, data) -> None:
             self._send(status, json.dumps(data, ensure_ascii=False).encode(), "application/json; charset=utf-8")
@@ -68,12 +74,17 @@ def make_handler(root: Path, allowed_hosts: set[str]):
         def _body(self) -> dict:
             if self.headers.get("X-SDLC") != "1" or not (self.headers.get("Content-Type") or "").startswith("application/json"):
                 raise ApiError(HTTPStatus.FORBIDDEN, "writes need Content-Type: application/json and X-SDLC: 1")
-            length = int(self.headers.get("Content-Length") or 0)
+            try:
+                length = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                raise ApiError(HTTPStatus.BAD_REQUEST, "invalid Content-Length")
+            if length < 0:
+                raise ApiError(HTTPStatus.BAD_REQUEST, "invalid Content-Length")
             if length > MAX_BODY:
                 raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, "request body too large")
             try:
                 data = json.loads(self.rfile.read(length) or b"{}")
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, UnicodeDecodeError):
                 raise ApiError(HTTPStatus.BAD_REQUEST, "body is not valid JSON")
             if not isinstance(data, dict):
                 raise ApiError(HTTPStatus.BAD_REQUEST, "body must be a JSON object")
@@ -95,7 +106,8 @@ def make_handler(root: Path, allowed_hosts: set[str]):
             self._dispatch(self._get)
 
         def do_POST(self):
-            self._dispatch(self._post)
+            with mutation_lock:
+                self._dispatch(self._post)
 
         def _get(self) -> None:
             url = urlparse(self.path)
@@ -124,8 +136,12 @@ def make_handler(root: Path, allowed_hosts: set[str]):
             path = urlparse(self.path).path
             data = self._body()
             if path == "/api/work":
-                title = str(data.get("title", "")).strip()
-                owner = str(data.get("owner", "")).strip()
+                title, owner = data.get("title", ""), data.get("owner", "")
+                if not isinstance(title, str) or not isinstance(owner, str):
+                    raise ApiError(HTTPStatus.BAD_REQUEST, "title and owner must be text")
+                if len(title) > 80 or len(owner) > 2000 or any(c in title + owner for c in "\r\n\0"):
+                    raise ApiError(HTTPStatus.BAD_REQUEST, "title and owner must be short single-line text")
+                title, owner = title.strip(), owner.strip()
                 if not title or not owner:
                     raise ApiError(HTTPStatus.BAD_REQUEST, "title and owner are required")
                 intent = workitems.new_work(root, title, owner, str(data.get("tier", "T1")))
@@ -140,6 +156,14 @@ def make_handler(root: Path, allowed_hosts: set[str]):
                     return self._json(HTTPStatus.CREATED, {"path": created.relative_to(root).as_posix()})
                 if stage not in api.STAGES:
                     raise ApiError(HTTPStatus.BAD_REQUEST, "stage must be intent, spec, or plan")
+                if m.group(2) == "draft":
+                    try:
+                        saved = drafts.save(work / f"{stage}.md", root, data)
+                    except ValueError as exc:
+                        if isinstance(exc, workitems.GateError):
+                            raise
+                        raise ApiError(HTTPStatus.BAD_REQUEST, str(exc))
+                    return self._json(HTTPStatus.OK, saved)
                 art = workitems.submit(work / f"{stage}.md", root)
                 return self._json(HTTPStatus.OK, {"path": art.rel, "status": art.status})
             raise ApiError(HTTPStatus.NOT_FOUND, "no such endpoint")

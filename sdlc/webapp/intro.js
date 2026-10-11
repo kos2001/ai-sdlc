@@ -46,6 +46,7 @@
 
     try {
       const [o, items] = await Promise.all([api("/api/overview"), api("/api/work")]);
+      if (!view.isConnected) return;
       const t3 = items.find((i) => i.tier === "T3" && i.awaiting.length);
       const done = items.find((i) => i.stage === "done");
       const loop = items.find((i) => i.origin === "maintain-loop");
@@ -59,11 +60,13 @@
       if (done) cards.push([`#/work/${done.id}`, fill(L.done[0], { id: done.id }), L.done[1]]);
       if (loop) cards.push([`#/work/${loop.id}`, fill(L.loop[0], { id: loop.id }), L.loop[1]]);
       if (o.gate_wait_hours.count) cards.push(["#/", fill(L.wait[0], { h: o.gate_wait_hours.median }), fill(L.wait[1], { n: o.gate_wait_hours.count })]);
-      document.getElementById("intro-live").innerHTML = cards.length
+      view.querySelector("#intro-live").innerHTML = cards.length
         ? cards.map(([href, h, p]) => `<a class="card live-card" href="${href}"><b>${esc(h)}</b><span>${esc(p)}</span><span class="go">${esc(c.open)}</span></a>`).join("")
         : `<div class="empty">${esc(c.liveEmpty)}</div>`;
     } catch (err) {
-      document.getElementById("intro-live").innerHTML = `<div class="empty">${esc(fill(c.liveFail, { msg: err.message }))}</div>`;
+      if (!view.isConnected) return;
+      view.querySelector("#intro-live").innerHTML = `<div class="empty">${esc(fill(c.liveFail, { msg: err.message }))}<br><button class="btn" data-retry>${esc(App.t("ui.retry"))}</button></div>`;
+      view.querySelector("[data-retry]").onclick = () => App.render("retry");
     }
   });
 })();
