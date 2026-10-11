@@ -15,7 +15,7 @@ ai-sdlc는 Anthropic Applied AI의 *AI-native SDLC 플레이북*을 실제로 �
 
 - Python 3.11+ 와 git만 있으면 됩니다. 외부 패키지는 쓰지 않습니다 (아이콘 PNG 생성만 Pillow 선택).
 - 구성: CLI(`python3 -m sdlc`) · Claude Code Hook/Skill/서브에이전트 · GitHub Actions · 로컬 웹 앱 · 소개 사이트.
-- 테스트 70개 (`make check`), GitHub Actions `ci`에서 통과.
+- Python 단위 테스트·아티팩트·교훈 검증 (`make check`), 별도 브라우저 회귀 검증.
 
 ## 목차
 
@@ -73,7 +73,7 @@ intent.md ──수락──▶ spec.md ──승인──▶ plan.md ──승�
 
 ```bash
 git clone https://github.com/kos2001/ai-sdlc.git && cd ai-sdlc
-make check                                           # 테스트 70개 + 아티팩트 검증
+make check                                           # 단위 테스트 + 아티팩트·교훈 검증
 
 # 모든 상태가 들어 있는 예시 저장소(샘플 데이터)로 웹 앱 보기
 python3 -m sdlc demo /tmp/demo-shop
@@ -217,9 +217,9 @@ python3 -m sdlc lessons close L-013 --kind rule --rule "데이터에서 패턴�
 python3 -m sdlc lessons status
 ```
 
-이 저장소의 원장은 만드는 동안 실제로 한 실수 11건으로 시작합니다. 9건은 테스트나 규칙으로 닫혔고, 2건(Hook의
-과잉 차단)은 아직 열려 있습니다. **기존 게이트가 먼저 잡은 것은 11건 중 2건(18%)** — 나머지는 사람·리뷰·측정이
-사후에 찾았습니다. 이 비율이 올라가는 것이 루프가 작동한다는 증거입니다.
+이 저장소의 원장은 만드는 동안 실제로 한 실수 11건으로 시작했습니다. 당시 9건은 테스트나 규칙으로 닫혔고,
+2건은 열려 있었습니다. **초기 11건 중 기존 게이트가 먼저 잡은 것은 2건(18%)** — 나머지는 사람·리뷰·측정이
+사후에 찾았습니다. 현재 수치와 추가 교훈은 `python3 -m sdlc lessons status`와 개선 루프 화면에서 확인합니다.
 
 ## 웹 앱
 
@@ -232,11 +232,17 @@ python3 -m sdlc --root <저장소> serve        # http://127.0.0.1:8791/  (한�
 | 소개 | 전통 SDLC와 무엇이 다른가 — 한눈에 보는 차이, 단계별 변화, 누가 무엇을, 이 저장소의 실데이터 카드, FAQ |
 | 가이드 | 전체 이야기 (`web/index.html`) 를 앱 안에서 |
 | 개요 | 진행 중인 작업, 사람을 기다리는 게이트, 게이트 대기 중앙값(git), AC 추적, 열린 인시던트, 복사할 승인 명령 |
-| 작업 보드 | intent → spec → plan → build → done 칸반 |
-| 작업 상세 | 체인과 승인, git에서 재구성한 감사 기록(에이전트·사람 구분), AC별 ✓/✗, 아티팩트 본문 |
-| 브랜치 점검 | 현재 브랜치의 위험 등급과 그 원인 파일, CI와 같은 게이트, 병합 후 이어질 플레이 |
-| 인시던트 | control band 이탈과 후속 의도 |
-| 개선 루프 | 교훈 원장, 예방률, 발견 주체, 통제 종류, 살아 있는 통제 |
+| 작업 보드 | 칸반/목록, ID·제목·담당자 검색, 단계·위험 등급·승인 대기·검증 문제 필터, 정렬. 조건은 URL에 보존 |
+| 작업 상세 | 체인·감사 기록·AC 추적, 키보드 상세 탭, 초안 본문·근거 편집과 미리보기·저장·제출 |
+| 브랜치 점검 | 비교 기준 ref 선택, 위험 등급과 원인 파일, CI와 같은 게이트, 오류 재시도 |
+| 인시던트 | control band 이탈과 후속 의도, 검색·상태 필터 |
+| 개선 루프 | 교훈·예방률·통제와 검색·상태·발견 주체 필터 |
+
+개요의 작업 수와 단계 링크를 클릭하면 해당 조건의 보드로 이동합니다. 새 작업을 만들면
+의도 편집 탭이 열립니다. 본문과 근거를 작성하고 **변경 저장** 후 **제출**하세요.
+편집 중 탭·언어 전환과 앱 내 새로고침은 입력을 유지하며, 화면 이탈에는 확인을 요청합니다.
+다른 편집기에서 파일이 바뀌면 저장을 거절하고 입력을 유지합니다. 최신 파일 불러오기는
+확인 후 입력을 버립니다. 제출된 아티팩트는 읽기 전용이며 승인은 기존 사람 CLI로 합니다.
 
 **API** (모두 JSON)
 
@@ -248,12 +254,16 @@ python3 -m sdlc --root <저장소> serve        # http://127.0.0.1:8791/  (한�
 | GET | `/api/incidents` | 인시던트 |
 | GET | `/api/lessons` | 교훈 원장과 측정값 |
 | POST | `/api/work` | 의도 초안 생성 `{title, owner, tier}` |
+| POST | `/api/work/W-NNNN/draft` | 초안 본문 저장 `{stage, body, revision, sources?}`. sources는 intent만. revision은 상세 응답에 포함. 오래된 revision·비초안은 409, 잘못된 입력은 400 |
 | POST | `/api/work/W-NNNN/stage` | 다음 단계 초안 `{stage}` |
 | POST | `/api/work/W-NNNN/submit` | 제출 `{stage}` — 게이트 위반은 409 |
 
 **보안 모델**: 127.0.0.1에만 바인딩, Host 헤더가 루프백이 아니면 403(DNS rebinding 차단), 쓰기는
 `Content-Type: application/json` + `X-SDLC: 1` 헤더 필수, 정적 파일은 앱 폴더 밖으로 나가지 않음.
 **승인 엔드포인트는 일부러 없습니다** — 로컬의 어떤 프로세스(에이전트 포함)든 HTTP를 부를 수 있기 때문입니다.
+초안 편집은 본문·근거만 허용하며 승인·상태·등급·담당자 등 메타데이터는 보존합니다.
+HTTP 쓰기는 서버에서 직렬화하고 파일은 원자적으로 교체합니다. 외부 편집기는 revision으로
+확인하지만, 외부 프로세스와의 완전한 트랜잭션 잠금은 제공하지 않습니다.
 
 ## CI/CD 워크플로
 
@@ -320,7 +330,7 @@ bands/                control band 정의 예시
 lessons/ledger.json   교훈 원장
 scripts/make_icons.py 아이콘 생성
 docs/                 design/ 설계서 · adoption/ 도입 사례 · patches/ 적용 대기 패치
-tests/                unittest 70개
+tests/                Python unittest + frontend.js 브라우저 회귀 검증
 ```
 
 ## 개발
@@ -330,6 +340,20 @@ make check                                  # 단위 테스트 + 아티팩트 �
 python3 -m unittest tests.test_server -v    # 특정 모듈만
 python3 scripts/make_icons.py [--png]       # 아이콘 재생성 (PNG는 Pillow 필요)
 ```
+
+브라우저 검증은 Node.js와 별도로 설치한 Playwright/Chromium을 사용하며 제품 실행에는
+필요하지 않습니다. 임시 demo 저장소를 생성해 검증하고 종료 시 정리합니다.
+
+```bash
+export SDLC_PLAYWRIGHT=/absolute/path/to/node_modules/playwright
+# 설치된 Chromium을 사용하려면 선택적으로 지정
+export SDLC_CHROMIUM=/absolute/path/to/chromium
+python3 scripts/check_frontend.py
+```
+
+보드 탐색, 생성→편집→저장→제출, 동시·실패·지연 응답, 저장 충돌, 키보드 탭과
+375px/데스크톱 × 한국어/영어 × 밝은/어두운 화면을 검증합니다.
+스크린샷은 기본 `/private/tmp/ai-sdlc-frontend-qa`에 저장하며 `SDLC_SCREENSHOTS`로 변경할 수 있습니다.
 
 - 파이썬은 표준 라이브러리만, 테스트는 `unittest`. 명령은 위반 시 0이 아닌 종료 코드.
 - `sdlc/` 파일은 12KB 이하로 유지합니다 (이 패키지를 복사해 쓰는 저장소의 입력 크기 게이트 때문).

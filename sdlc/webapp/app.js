@@ -14,7 +14,11 @@ const App = (() => {
     };
     const res = await fetch(path, opts);
     const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    if (!res.ok) {
+      const err = new Error(data.error || `HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
     return data;
   }
 
@@ -68,16 +72,46 @@ const App = (() => {
   /* Router */
   const routes = [];
   const route = (re, name, render) => routes.push({ re, name, render });
-  async function render() {
+  let activeHash = "", guard = null;
+  const setGuard = (fn) => { guard = fn; };
+  const query = () => new URLSearchParams(location.hash.split("?")[1] || "");
+  function updateQuery(values, replace = false) {
+    const params = query();
+    for (const [key, value] of Object.entries(values)) {
+      if (value === "" || value == null) params.delete(key); else params.set(key, value);
+    }
+    const hash = `${location.hash.split("?")[0]}${params.size ? `?${params}` : ""}`;
+    history[replace ? "replaceState" : "pushState"](null, "", hash);
+    activeHash = hash;
+  }
+  async function render(reason = "navigate") {
     const hash = location.hash.replace(/^#/, "") || "/";
-    const r = routes.find((x) => x.re.test(hash)) || routes[0];
-    document.querySelectorAll(".nav a").forEach((a) => a.classList.toggle("on", a.dataset.route === r.name));
-    const view = $("#view");
+    const path = hash.split("?")[0];
+    if (guard && !guard(path, reason)) {
+      history.replaceState(null, "", activeHash);
+      return;
+    }
+    guard = null;
+    activeHash = `#${hash}`;
+    const r = routes.find((x) => x.re.test(path)) || routes[0];
+    document.querySelectorAll(".nav a").forEach((a) => {
+      const on = a.dataset.route === r.name;
+      a.classList.toggle("on", on);
+      if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    // Replacing the root isolates every pending renderer from the current screen.
+    const view = document.createElement("div");
+    view.id = "view";
+    view.setAttribute("aria-live", "polite");
+    $("#view").replaceWith(view);
     view.setAttribute("aria-busy", "true");
+    view.innerHTML = `<div class="empty loading" role="status">${esc(t("ui.loading"))}</div>`;
     try {
-      await r.render(view, hash.match(r.re));
+      await r.render(view, path.match(r.re), query());
     } catch (err) {
-      view.innerHTML = `<div class="empty">${esc(t("load.fail", { msg: err.message }))}<br><span class="fine">${esc(t("load.hint"))}</span></div>`;
+      if (!view.isConnected) return;
+      view.innerHTML = `<div class="empty"><p role="alert">${esc(t("load.fail", { msg: err.message }))}</p><p class="fine">${esc(t("load.hint"))}</p><button class="btn" data-retry>${esc(t("ui.retry"))}</button></div>`;
+      $("[data-retry]", view).onclick = () => render("retry");
     }
     view.removeAttribute("aria-busy");
   }
@@ -94,17 +128,29 @@ const App = (() => {
 
   function wireNewWork() {
     const dlg = $("#new-dialog"), form = $("#new-form"), err = $("#nf-err");
+    let pending = false;
     $("#new-work").onclick = () => { err.hidden = true; form.reset(); dlg.showModal(); $("#nf-title").focus(); };
-    $("#nf-cancel").onclick = () => dlg.close();
+    $("#nf-cancel").onclick = () => { if (!pending) dlg.close(); };
+    dlg.addEventListener("cancel", (e) => { if (pending) e.preventDefault(); });
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (pending) return;
       const body = Object.fromEntries(new FormData(form));
+      body.title = body.title.trim(); body.owner = body.owner.trim();
+      if (!body.title || !body.owner) { err.textContent = t("ui.required"); err.hidden = false; return; }
+      pending = true; err.hidden = true;
+      form.querySelectorAll("button").forEach((b) => (b.disabled = true));
+      form.setAttribute("aria-busy", "true");
       try {
         const r = await api("/api/work", body);
         dlg.close();
         toast(t("new.created", { id: r.id, path: r.path }));
-        location.hash = `#/work/${r.id}`;
+        location.hash = `#/work/${r.id}?tab=intent`;
       } catch (ex) { err.textContent = ex.message; err.hidden = false; }
+      finally {
+        pending = false; form.removeAttribute("aria-busy");
+        form.querySelectorAll("button").forEach((b) => (b.disabled = false));
+      }
     });
   }
 
@@ -114,17 +160,18 @@ const App = (() => {
     const l = e.target.closest("[data-lang]");
     if (l) I18N.set(l.dataset.lang);
   });
-  window.addEventListener("hashchange", render);
-  window.addEventListener("langchange", render);
+  window.addEventListener("hashchange", () => { if (location.hash !== activeHash) render(); });
+  window.addEventListener("popstate", () => { if (location.hash !== activeHash) render(); });
+  window.addEventListener("langchange", () => render("language"));
   window.addEventListener("DOMContentLoaded", () => {
     I18N.apply();
     $("#brand-mark").innerHTML = ICONS.mark(24);
     wireNewWork();
     if (!location.hash) history.replaceState(null, "", location.search + "#/intro"); // first stop: what is different, and why
-    $("#refresh").onclick = () => { loadRepo(); render(); };
+    $("#refresh").onclick = () => { loadRepo(); render("refresh"); };
     loadRepo();
     render();
   });
 
-  return { $, esc, t, api, toast, route, render, setTitle, loadRepo, markdown, statusChip, tierChip, cmdBlock, when, stageName, ROLE };
+  return { $, esc, t, api, toast, route, render, setTitle, loadRepo, markdown, statusChip, tierChip, cmdBlock, when, stageName, ROLE, query, updateQuery, setGuard };
 })();
