@@ -5,7 +5,10 @@
 <p align="center"><b>The software lifecycle after code stops being the bottleneck.</b><br>
 Agents do the work, people make the decisions, tools enforce the rules.</p>
 
-<p align="center"><a href="README.md">한국어</a> · English</p>
+<p align="center"><a href="README.md" lang="ko">한국어</a> · <strong lang="en">English</strong></p>
+
+This README is available in [한국어](README.md) and English. Both versions cover installation,
+usage, features, APIs, development and validation, and are updated together.
 
 ---
 
@@ -233,7 +236,7 @@ python3 -m sdlc --root <repo> serve        # http://127.0.0.1:8791/  (한국어 
 | Intro | What changes from the traditional SDLC — at a glance, stage by stage, who does what, live cards from this repository, FAQ |
 | Guide | The full story (`web/index.html`) inside the app |
 | Overview | Work in progress, gates waiting on people, median gate wait (from git), AC coverage, open incidents, approval commands to copy |
-| Board | Board/list views, search/filter/sort, work preview drawer. Filters persist in the URL and are restored when returning from details |
+| Board | Board/list, field search/filter/sort, saved view management and links, favorites/recent work, read-only preview drawer |
 | Work item | Chain, audit trail, AC coverage, keyboard tabs, draft body/evidence editing, Markdown formatting, preview, save and submit |
 | Branch check | Choose a comparison ref, inspect risk and CI gates, retry errors |
 | Incidents | Control band breaches and follow-up intents, search and status filters |
@@ -241,7 +244,16 @@ python3 -m sdlc --root <repo> serve        # http://127.0.0.1:8791/  (한국어 
 
 Overview counts and stage links open a filtered board. New work opens its intent editor.
 Use **Quick switch** or **Ctrl/⌘ K** to search work and screens, then use arrow keys and Enter to open a result.
+Favorites and recent work come first, and saved views can be found by name.
+Use **Save new view** to retain search, filters, sort and layout. After changing them, use **Save current filters**.
+**Copy filter link** shares the actual conditions without a private saved-view ID. Star a work item to favorite it.
+Personal views, favorites and recent IDs stay in this browser for this workspace; moving the repository to a new
+path starts a separate preference space. If storage is blocked or full, an on-screen notice explains that changes last only in the current tab.
+Search examples: `stage:spec tier:T3 owner:"Dana Park"`, `stage:spec,done -tier:T1`, `is:favorite`.
+Conditions combine with AND and comma-separated values with OR. `is:waiting`, `is:issues`, `is:untraced`,
+`is:recent` and `is:draft` are also supported; expand **Search syntax** for help. Invalid queries show an error above results.
 **Preview** on the board opens a read-only drawer; Escape returns focus to the same item.
+Board conditions persist in the URL and are restored when returning from details.
 Select text in a draft to format headings, bold, lists, checklists or code. **Ctrl/⌘ S** saves changes.
 Write the body and evidence, **Save changes**, then **Submit**. Unsaved inputs survive tab,
 language and in-app refresh changes; leaving asks for confirmation. An external file change
@@ -252,7 +264,7 @@ Submitted artifacts are read-only. Human approvals use the existing CLI.
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/overview` | Summary figures and the approval queue |
+| GET | `/api/overview` | Summary figures, approval queue and workspace_id (SHA-256 of the repository path) for personal preference isolation |
 | GET | `/api/work`, `/api/work/W-NNNN` | Work list / detail (with text and audit trail) |
 | GET | `/api/branch?base=REF` | Risk tier, gate results, events |
 | GET | `/api/incidents` | Incidents |
@@ -334,7 +346,7 @@ bands/                example control bands
 lessons/ledger.json   the lessons ledger
 scripts/make_icons.py icon generator
 docs/                 design/ design doc · adoption/ case study · patches/ pending patch
-tests/                Python unittest + frontend.js browser regressions
+tests/                Python unittest + frontend.js · discovery.js browser regressions
 ```
 
 ## Development
@@ -355,7 +367,8 @@ export SDLC_CHROMIUM=/absolute/path/to/chromium
 python3 scripts/check_frontend.py
 ```
 
-Checks cover board navigation, create/edit/save/submit, concurrent/failed/delayed responses,
+Checks cover board navigation, saving/sharing views, favorites/recent work, field search,
+storage failures/workspace isolation, create/edit/save/submit, concurrent/failed/delayed responses,
 save conflicts, keyboard tabs and 375px/desktop × Korean/English × light/dark rendering.
 Screenshots default to `/private/tmp/ai-sdlc-frontend-qa`; override with `SDLC_SCREENSHOTS`.
 
@@ -380,6 +393,7 @@ Screenshots default to `/private/tmp/ai-sdlc-frontend-qa`; override with `SDLC_S
 
 | Document | Contents |
 |---|---|
+| [한국어 README](README.md) · [English README](README.en.md) | Installation, usage, features, APIs and development (Korean / English) |
 | [`docs/design/ai-native-sdlc-design.md`](docs/design/ai-native-sdlc-design.md) | Design doc (Korean): principles, architecture, artifact spec, 12 plays, governance, roadmap, status |
 | [`docs/adoption/lls-kit.md`](docs/adoption/lls-kit.md) | Adoption review and measurements on a real repository (Korean) |
 | [`CLAUDE.md`](CLAUDE.md) · [`REVIEW.md`](REVIEW.md) | Agent operating rules · review policy |

@@ -278,5 +278,81 @@
       "ref": "tests/frontend.js::line boundary keeps the next line unchanged"
     },
     "closed_at": "2026-10-11"
+  },
+  {
+    "id": "L-019",
+    "title": "Discovery assertions ignored work items in list layout",
+    "area": "tests/discovery.js",
+    "detected_by": "test",
+    "detected_at": "2026-10-11",
+    "what_happened": "The favorites query assertion returned an empty set after switching to a saved list view, even though the table showed the matching work item.",
+    "root_cause": "The new browser test enumerated only card IDs rather than both supported layouts.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/discovery.js::#board-results .wcard .id, #board-results tbody td:first-child .mono"
+    },
+    "closed_at": "2026-10-11"
+  },
+  {
+    "id": "L-020",
+    "title": "Workspace-isolation test reused a same-document navigation",
+    "area": "tests/discovery.js",
+    "detected_by": "test",
+    "detected_at": "2026-10-11",
+    "what_happened": "Mocking a different workspace identity then changing only the hash left the existing preference scope loaded, so the isolation check inspected the previous workspace.",
+    "root_cause": "The test assumed hash navigation restarted application bootstrap and fetched repository metadata.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/discovery.js::workspace identity reload"
+    },
+    "closed_at": "2026-10-11"
+  },
+  {
+    "id": "L-021",
+    "title": "Favorite-limit warning was overwritten by a success handler",
+    "area": "sdlc/webapp/personal.js",
+    "detected_by": "review",
+    "detected_at": "2026-10-11",
+    "what_happened": "Review found that rejecting a 101st favorite was followed by the generic removed toast despite no change.",
+    "root_cause": "The UI treated an early-returning toggle as a successful state change.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/discovery.js::100 favorites"
+    },
+    "closed_at": "2026-10-11"
+  },
+  {
+    "id": "L-022",
+    "title": "Search parser treated natural apostrophes as opening quotes",
+    "area": "sdlc/webapp/work-search.js",
+    "detected_by": "review",
+    "detected_at": "2026-10-11",
+    "what_happened": "Names such as O'Brien and contractions such as don't would be rejected as unclosed quoted search phrases.",
+    "root_cause": "Quote mode began at every apostrophe rather than only at a token or field-value boundary.",
+    "gate_existed": false,
+    "status": "closed",
+    "control": {
+      "kind": "test",
+      "ref": "tests/discovery.js::natural apostrophes remain literal text"
+    },
+    "closed_at": "2026-10-11"
+  },
+  {
+    "id": "L-023",
+    "title": "README 검증에서 목차 제목을 본문 섹션 수에 포함했다",
+    "area": "documentation",
+    "detected_by": "measurement",
+    "detected_at": "2026-10-11",
+    "what_happened": "일회성 README 링크 검증에서 본문 16개를 전체 2단계 제목 수로 잘못 가정하여 목차를 포함한 17개 제목에서 assertion이 실패했다.",
+    "root_cause": "목차와 본문을 구분하지 않은 검증 스크립트의 가정. 임시 검증을 양 언어의 실제 제목 수 비교로 수정했으며, 제품 코드에 해당 동작이 없어 영구 통제는 아직 없다.",
+    "gate_existed": false,
+    "status": "open",
+    "control": null
   }
 ]
