@@ -126,13 +126,16 @@ const App = (() => {
   }
   const setTitle = (crumb, title) => { $("#crumb").textContent = crumb; $("#title").textContent = title; document.title = `${title} · ai-sdlc`; };
 
-  async function loadRepo() {
-    try {
-      const o = await api("/api/overview");
+  let repoRequest = null;
+  function loadRepo() {
+    if (repoRequest) return repoRequest;
+    repoRequest = api("/api/overview").then((o) => {
       $("#repo-name").textContent = o.repo;
       $("#repo-branch").textContent = o.branch || "";
+      window.dispatchEvent(new CustomEvent("repodata", { detail: o }));
       return o;
-    } catch { return null; }
+    }).catch(() => null).finally(() => { repoRequest = null; });
+    return repoRequest;
   }
 
   function wireNewWork() {

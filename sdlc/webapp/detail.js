@@ -7,12 +7,14 @@
 
   route(/^\/work\/(W-\d{4,})$/, "board", async (view, m, params) => {
     App.setGuard((path) => Editor.canLeave(m[1], path));
-    const w = await api(`/api/work/${m[1]}`);
+    const [w] = await Promise.all([api(`/api/work/${m[1]}`), Preferences.ready()]);
     if (!view.isConnected) return;
+    Preferences.visit(w.id);
     setTitle(`${w.id} · ${stageName(w.stage)}`, w.title);
     view.innerHTML = `
       <a class="back-link" href="#${esc(/^\/board(?:\?|$)/.test(params.get("back") || "") ? params.get("back") : "/board")}">${esc(t("ui.back"))}</a>
       <div class="work-meta">
+        ${Personal.button(w.id)}
         ${tierChip(w.tier)}<span class="chip">${esc(t("wd.owner", { o: w.owner || "—" }))}</span>${w.origin === "maintain-loop" ? `<span class="chip gate">${esc(t("wd.loop"))}</span>` : ""}
       </div>
       <div class="chain" style="margin-top:16px">${KINDS.map((k, i) => link(w, k, i)).join("")}</div>

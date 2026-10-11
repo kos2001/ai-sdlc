@@ -18,8 +18,11 @@
   function draw() {
     const q = input.value.trim().toLocaleLowerCase(I18N.locale);
     const routes = screens.map(([path, label]) => ({ href: `#${path}`, title: t(label), meta: t("quick.screen") }));
-    const works = items.map((w) => ({ href: workHref(w.id), title: `${w.id} · ${w.title}`, meta: `${App.stageName(w.stage)} · ${w.owner || "—"}` }));
-    const found = [...routes, ...works].filter((r) => !q || `${r.title} ${r.meta}`.toLocaleLowerCase(I18N.locale).includes(q));
+    const personal = Personal.entries(items);
+    const ids = new Set(personal.map((w) => w.id));
+    const works = [...personal, ...items.filter((w) => !ids.has(w.id))].map((w) => ({ href: workHref(w.id), title: `${w.id} · ${w.title}`, meta: `${w.personal ? `${t(w.personal)} · ` : ""}${App.stageName(w.stage)} · ${w.owner || "—"}` }));
+    const views = Preferences.views.map((v) => ({ href: Preferences.href(v.state, v.id), title: v.name, meta: t("views.title") }));
+    const found = [...works.filter((r, i) => i < personal.length), ...views, ...routes, ...works.slice(personal.length)].filter((r) => !q || `${r.title} ${r.meta}`.toLocaleLowerCase(I18N.locale).includes(q));
     choices = found.slice(0, 15);
     info.textContent = t(found.length ? "quick.count" : "ui.noResults", { n: found.length });
     list.innerHTML = choices.map((r, i) => `<button type="button" role="option" tabindex="-1" id="quick-choice-${i}" aria-selected="false"><span>${esc(r.title)}</span><small>${esc(r.meta)}</small><span class="quick-enter" aria-hidden="true">↵</span></button>`).join("");
@@ -34,7 +37,7 @@
     error.hidden = true; retry.hidden = true;
     list.setAttribute("aria-busy", "true");
     try {
-      const data = await api("/api/work");
+      const [data] = await Promise.all([api("/api/work"), Preferences.ready()]);
       if (!dialog.open || token !== generation) return;
       items = data; draw();
     } catch (err) {
@@ -78,5 +81,6 @@
       e.preventDefault(); if (dialog.open) dialog.close(); else open();
     });
     window.addEventListener("viewchange", () => { if (dialog.open) dialog.close(); });
+    window.addEventListener("personalchange", () => { if (dialog.open) draw(); });
   });
 })();

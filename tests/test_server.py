@@ -41,6 +41,19 @@ class ServerTestCase(unittest.TestCase):
 
 
 class ReadModelTest(ServerTestCase):
+    def test_workspace_identity_is_stable_and_separates_same_named_roots(self):  # W-0005:AC-1
+        status, first = self.request("GET", "/api/overview")
+        self.assertEqual(status, 200)
+        self.assertRegex(first["workspace_id"], r"^[a-f0-9]{64}$")
+        self.assertEqual(first["workspace_id"], api.overview(self.root / ".")["workspace_id"])
+        with tempfile.TemporaryDirectory() as tmp:
+            other = Path(tmp) / self.root.name
+            other.mkdir()
+            second = api.overview(other)
+        self.assertEqual(first["repo"], second["repo"])
+        self.assertNotEqual(first["workspace_id"], second["workspace_id"])
+        self.assertNotIn(str(self.root), json.dumps(first))
+
     def test_overview_counts_the_demo(self):
         status, o = self.request("GET", "/api/overview")
         self.assertEqual(status, 200)
